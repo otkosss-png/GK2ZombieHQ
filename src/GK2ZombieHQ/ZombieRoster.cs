@@ -56,7 +56,9 @@ namespace GK2ZombieHQ
                             RedSkulls = z.RedSkulls,
                             Collar = z.Collar != null ? SafeItemName(z.Collar) : null,
                             Activity = z.WorkerActivity != null ? z.WorkerActivity.ToString() : null,
-                            CanRecall = true
+                            // ОТКЛЮЧЕНО: «Отозвать» через PutZombieFromGameSceneToStoreForPlayer ломает
+                            // рабочую станцию (козлы и т.п.) — сначала нужно корректно отвязать зомби.
+                            CanRecall = false
                         }
                     });
                 }
@@ -72,14 +74,9 @@ namespace GK2ZombieHQ
 
         internal static bool Recall(RosterEntry entry)
         {
-            try
-            {
-                if (entry == null || entry.Data == null) return false;
-                MainGame.ZombieSystemData
-                    .PutZombieFromGameSceneToStoreForPlayer(MainGame.PlayerData, entry.Data);
-                return true;
-            }
-            catch (Exception ex) { Plugin.Log.LogWarning("recall: " + ex); return false; }
+            // ОТКЛЮЧЕНО (опасно): прямой перенос в стор не отвязывает зомби от станции и ломает её.
+            Plugin.Log.LogWarning("recall disabled: unsafe (station would break)");
+            return false;
         }
 
         internal static void OpenWindow(RosterEntry entry)
