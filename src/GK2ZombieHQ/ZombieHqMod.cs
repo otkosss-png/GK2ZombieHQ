@@ -18,7 +18,7 @@ namespace GK2ZombieHQ
 
         internal ConfigEntry<string> Language;
         internal ConfigEntry<bool> HudEnabled;
-        internal ConfigEntry<int> HudFontSize, HudOffsetX, HudOffsetY;
+        internal ConfigEntry<int> HudFontSize, HudOffsetX, HudOffsetY, HudMaxZombies;
         internal ConfigEntry<KeyboardShortcut> HudToggleKey, PanelKey;
 
         public override Gk2ModMetadata Metadata => _metadata;
@@ -36,6 +36,8 @@ namespace GK2ZombieHQ
                 "Отступ HUD по X", "", 2, 30);
             HudOffsetY = s.AddIntSlider("Hud", "OffsetY", 1000, 0, 1080,
                 "Отступ HUD по Y", "", 2, 40);
+            HudMaxZombies = s.AddIntSlider("Hud", "MaxZombies", 0, 0, 300,
+                "Allowed zombies (0 = hide)", "Shown as N / L; N turns red when above L", 1, 50);
             HudToggleKey = s.AddKeybind("Keys", "HudToggle", new KeyboardShortcut(KeyCode.Z),
                 "Клавиша HUD", "Скрыть/показать счётчик", 10);
             PanelKey = s.AddKeybind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8),

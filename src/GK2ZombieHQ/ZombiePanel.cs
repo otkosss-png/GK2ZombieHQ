@@ -7,10 +7,20 @@ namespace GK2ZombieHQ
 {
     internal sealed class ZombiePanel : MonoBehaviour
     {
+        internal static ZombiePanel Instance;
+
         private GameObject _root;
         private RectTransform _content;
         private TextMeshProUGUI _countLabel;
         private float _timer;
+
+        internal bool IsOpen => _root != null && _root.activeSelf;
+        internal void Close() { if (_root != null) _root.SetActive(false); }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
 
         private void Start()
         {
@@ -117,7 +127,8 @@ namespace GK2ZombieHQ
         private void Refresh()
         {
             int count = ZombieRoster.Count();
-            _countLabel.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, 0);
+            int max = Plugin.Mod.HudMaxZombies.Value;
+            _countLabel.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, max);
 
             foreach (Transform child in _content) Destroy(child.gameObject);
             var entries = ZombieRoster.Load();

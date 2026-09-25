@@ -34,6 +34,9 @@ namespace GK2ZombieHQ
 
             ZombieText.Language = ResolveLanguage(Mod.Language.Value);
 
+            try { new HarmonyLib.Harmony(Guid).PatchAll(typeof(Plugin).Assembly); }
+            catch (Exception ex) { Logger.LogWarning("harmony patch failed: " + ex.Message); }
+
             var go = new GameObject("GK2ZombieHQ");
             DontDestroyOnLoad(go);
             go.AddComponent<ZombieHud>();
@@ -50,6 +53,7 @@ namespace GK2ZombieHQ
             Mod.HudFontSize = Config.Bind("Hud", "FontSize", 60, "HUD font size");
             Mod.HudOffsetX = Config.Bind("Hud", "OffsetX", 12, "HUD X offset (px)");
             Mod.HudOffsetY = Config.Bind("Hud", "OffsetY", 1000, "HUD Y offset (px)");
+            Mod.HudMaxZombies = Config.Bind("Hud", "MaxZombies", 0, "Allowed zombies (0 = hide)");
             Mod.HudToggleKey = Config.Bind("Keys", "HudToggle", new KeyboardShortcut(KeyCode.Z), "Toggle HUD");
             Mod.PanelKey = Config.Bind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8), "Open the zombie panel");
         }
