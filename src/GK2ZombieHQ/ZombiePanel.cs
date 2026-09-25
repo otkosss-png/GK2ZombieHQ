@@ -151,7 +151,7 @@ namespace GK2ZombieHQ
                 name.overflowMode = TextOverflowModes.Ellipsis;
                 var nrt = name.rectTransform;
                 nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
-                nrt.offsetMin = new Vector2(16, 6); nrt.offsetMax = new Vector2(-444, -6);
+                nrt.offsetMin = new Vector2(16, 6); nrt.offsetMax = new Vector2(-672, -6);
 
                 var entry = e;
 
@@ -163,13 +163,20 @@ namespace GK2ZombieHQ
                 ort.anchoredPosition = new Vector2(-24, 0);
                 openBtn.onClick.AddListener(() => { ZombieRoster.OpenWindow(entry); _root.SetActive(false); });
 
+                var camBtn = UiFactory.TextButton("Camera", row, ZombieText.Get("Camera"), 30);
+                var crt2 = camBtn.GetComponent<RectTransform>();
+                crt2.anchorMin = new Vector2(1, 0.5f); crt2.anchorMax = new Vector2(1, 0.5f);
+                crt2.pivot = new Vector2(1, 0.5f); crt2.sizeDelta = new Vector2(200, 60);
+                crt2.anchoredPosition = new Vector2(-236, 0);
+                camBtn.onClick.AddListener(() => { ZombieRoster.FocusCamera(entry); _root.SetActive(false); });
+
                 if (e.Info.CanRecall)
                 {
                     var rec = UiFactory.TextButton("Recall", row, ZombieText.Get("Recall"), 30);
                     var rrt = rec.GetComponent<RectTransform>();
                     rrt.anchorMin = new Vector2(1, 0.5f); rrt.anchorMax = new Vector2(1, 0.5f);
                     rrt.pivot = new Vector2(1, 0.5f); rrt.sizeDelta = new Vector2(200, 60);
-                    rrt.anchoredPosition = new Vector2(-236, 0);
+                    rrt.anchoredPosition = new Vector2(-448, 0);
                     rec.onClick.AddListener(() => { ZombieRoster.Recall(entry); Refresh(); });
                 }
             }

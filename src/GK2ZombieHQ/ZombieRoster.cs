@@ -91,6 +91,18 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("recall: " + ex); return false; }
         }
 
+        // Плавно ведём камеру к зомби.
+        internal static void FocusCamera(RosterEntry entry)
+        {
+            try
+            {
+                if (entry == null || entry.Data == null) return;
+                var cam = CameraSystem.Instance != null ? CameraSystem.Instance.ActiveCameraController : null;
+                if (cam != null) cam.SetPosition(entry.Data.Position, 0.6f, null);
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("focus camera: " + ex); }
+        }
+
         internal static void OpenWindow(RosterEntry entry)
         {
             try

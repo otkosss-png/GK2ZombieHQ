@@ -13,6 +13,7 @@ namespace GK2ZombieHQ.Core
             ["Title"] = ("Zombie HQ", "Зомби-штаб"),
             ["Open"] = ("Open", "Открыть"),
             ["Recall"] = ("Recall", "Отозвать"),
+            ["Camera"] = ("Camera", "Камера"),
             ["Close"] = ("Close", "Закрыть"),
             ["NoZombies"] = ("No zombies", "Зомби нет"),
             ["Free"] = ("free", "свободен"),
