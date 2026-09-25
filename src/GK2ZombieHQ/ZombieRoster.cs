@@ -50,11 +50,11 @@ namespace GK2ZombieHQ
                         Info = new ZombieInfo
                         {
                             Id = kv.Key.ToString(),
-                            Name = string.IsNullOrEmpty(z.Name) ? kv.Key.ToString() : z.Name,
+                            Name = LocalizeName(z.Name, kv.Key.ToString()),
                             Kind = MapKind(z.ZombieType),
                             WhiteSkulls = z.WhiteSkulls,
                             RedSkulls = z.RedSkulls,
-                            Collar = z.Collar != null ? SafeItemName(z.Collar) : null,
+                            Collar = SafeItemHeader(z.Collar),
                             Activity = z.WorkerActivity != null ? z.WorkerActivity.ToString() : null,
                             // ОТКЛЮЧЕНО: «Отозвать» через PutZombieFromGameSceneToStoreForPlayer ломает
                             // рабочую станцию (козлы и т.п.) — сначала нужно корректно отвязать зомби.
@@ -89,9 +89,23 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("open zombie window: " + ex); }
         }
 
-        private static string SafeItemName(Item item)
+        // Имя зомби в игре — ключ локализации (zombie_name_29); превращаем в читаемое.
+        private static string LocalizeName(string name, string fallback)
         {
-            try { return item != null && item.Definition != null ? item.Definition.id : null; } catch { return null; }
+            if (string.IsNullOrEmpty(name)) return fallback;
+            try
+            {
+                var loc = LLBase.L(name);
+                return string.IsNullOrEmpty(loc) ? name : loc;
+            }
+            catch { return name; }
+        }
+
+        // Название предмета (ошейник) — по заголовку из игры, а не по id.
+        private static string SafeItemHeader(Item item)
+        {
+            try { return item != null && item.Definition != null ? item.Definition.GetHeader() : null; }
+            catch { return null; }
         }
 
         private static ZombieKind MapKind(ZombieType t)
