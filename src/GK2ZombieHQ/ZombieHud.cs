@@ -108,8 +108,10 @@ namespace GK2ZombieHQ
                 _timer = 0.5f;
 
                 int count = ZombieRoster.Count();
-                int limit = ZombieRoster.Limit();
-                if (!_limitLogged) { _limitLogged = true; Plugin.Log.LogInfo("hud: count=" + count + " limit=" + limit); }
+                // Реальный «разрешённый» лимит в коде игры пока не найден (zombies_limit_mechanic — флаг).
+                // Пока показываем только текущее число; при появлении лимита вернём "N / L".
+                int limit = 0;
+                if (!_limitLogged) { _limitLogged = true; Plugin.Log.LogInfo("hud: count=" + count + " rawLimit=" + ZombieRoster.Limit()); }
 
                 bool gameActive = count >= 0;
                 bool show = gameActive && _visible;

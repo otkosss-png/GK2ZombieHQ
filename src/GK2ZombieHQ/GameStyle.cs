@@ -79,7 +79,7 @@ namespace GK2ZombieHQ
                 var col = LazySingletonSO<EasySpritesCollection>.Instance;
                 if (col != null)
                 {
-                    foreach (var name in new[] { "i_zombie_1", "i_zombie_2", "i_zombie_3", "zombie", "zombie_worker" })
+                    foreach (var name in new[] { "body_zombie", "i_body", "i_zombie_1", "i_zombie_2", "zombie", "zombie_worker" })
                     {
                         var sp = col.GetSprite(name);
                         if (sp != null) { _zombieIcon = sp; break; }
