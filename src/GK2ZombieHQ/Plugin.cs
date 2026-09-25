@@ -8,7 +8,7 @@ using UnityEngine;
 namespace GK2ZombieHQ
 {
     [BepInDependency("ru.superman4eg.gk2.framework")]
-    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.0.0")]
+    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.1.0")]
     public sealed class Plugin : BaseUnityPlugin
     {
         public const string Guid = "otkosss.gk2.zombiehq";
