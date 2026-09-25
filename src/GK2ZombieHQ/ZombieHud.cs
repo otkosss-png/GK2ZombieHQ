@@ -14,6 +14,12 @@ namespace GK2ZombieHQ
 
         private void Start()
         {
+            try { BuildUi(); }
+            catch (System.Exception ex) { Plugin.Log.LogWarning("hud build: " + ex); }
+        }
+
+        private void BuildUi()
+        {
             _canvasGo = new GameObject("GK2ZombieHQ_HudCanvas");
             _canvasGo.transform.SetParent(transform, false);
             var canvas = _canvasGo.AddComponent<Canvas>();
@@ -43,6 +49,7 @@ namespace GK2ZombieHQ
         {
             try
             {
+                if (_canvasGo == null) return;
                 if (Input.GetKeyDown(Plugin.Instance.HudToggleKey.Value))
                 {
                     _visible = !_visible;

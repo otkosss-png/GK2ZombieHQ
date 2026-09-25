@@ -15,13 +15,21 @@ namespace GK2ZombieHQ
     {
         internal static int Count()
         {
-            try { return MainGame.PlayerData.GetResInt("cur_zombies_count"); }
+            try
+            {
+                var pd = MainGame.PlayerData;
+                return pd == null ? -1 : pd.GetResInt("cur_zombies_count");
+            }
             catch (Exception ex) { Plugin.Log.LogWarning("zombie count: " + ex.Message); return -1; }
         }
 
         internal static int Limit()
         {
-            try { return MainGame.PlayerData.GetResInt("zombies_limit_mechanic"); }
+            try
+            {
+                var pd = MainGame.PlayerData;
+                return pd == null ? -1 : pd.GetResInt("zombies_limit_mechanic");
+            }
             catch (Exception ex) { Plugin.Log.LogWarning("zombie limit: " + ex.Message); return -1; }
         }
 

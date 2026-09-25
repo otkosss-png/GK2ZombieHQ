@@ -14,8 +14,12 @@ namespace GK2ZombieHQ
 
         private void Start()
         {
-            BuildUi();
-            _root.SetActive(false);
+            try
+            {
+                BuildUi();
+                _root.SetActive(false);
+            }
+            catch (System.Exception ex) { Plugin.Log.LogWarning("panel build: " + ex); }
         }
 
         private void BuildUi()
@@ -89,6 +93,7 @@ namespace GK2ZombieHQ
         {
             try
             {
+                if (_root == null) return;
                 if (Input.GetKeyDown(Plugin.Instance.PanelKey.Value))
                 {
                     bool show = !_root.activeSelf;
