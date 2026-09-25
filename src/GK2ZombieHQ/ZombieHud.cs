@@ -8,9 +8,11 @@ namespace GK2ZombieHQ
     internal sealed class ZombieHud : MonoBehaviour
     {
         private TextMeshProUGUI _text;
+        private Image _icon;
         private GameObject _canvasGo;
         private float _timer;
         private bool _visible = true;
+        private bool _limitLogged;
 
         private void Start()
         {
@@ -41,7 +43,29 @@ namespace GK2ZombieHQ
             brt.anchorMax = new Vector2(0, 1);
             brt.pivot = new Vector2(0, 1);
             brt.anchoredPosition = new Vector2(Plugin.Mod.HudOffsetX.Value, -Plugin.Mod.HudOffsetY.Value);
-            brt.sizeDelta = new Vector2(340, 58);
+            brt.sizeDelta = new Vector2(300, 64);
+
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(bg.transform, false);
+            _icon = iconGo.GetComponent<Image>();
+            var irt = (RectTransform)iconGo.transform;
+            irt.anchorMin = new Vector2(0, 0.5f);
+            irt.anchorMax = new Vector2(0, 0.5f);
+            irt.pivot = new Vector2(0, 0.5f);
+            irt.anchoredPosition = new Vector2(10, 0);
+            irt.sizeDelta = new Vector2(52, 52);
+            var iconSprite = GameStyle.ZombieIcon;
+            if (iconSprite != null)
+            {
+                _icon.sprite = iconSprite;
+                _icon.preserveAspect = true;
+                _icon.raycastTarget = false;
+                _icon.color = Color.white;
+            }
+            else
+            {
+                iconGo.SetActive(false);
+            }
 
             var textGo = new GameObject("Count", typeof(RectTransform));
             textGo.transform.SetParent(bg.transform, false);
@@ -52,11 +76,12 @@ namespace GK2ZombieHQ
             _text.fontStyle = FontStyles.Bold;
             _text.alignment = TextAlignmentOptions.Left;
             _text.color = GameStyle.Text;
+            _text.raycastTarget = false;
             var rt = _text.rectTransform;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(12, 8);
-            rt.offsetMax = new Vector2(-12, -8);
+            rt.offsetMin = new Vector2(iconSprite != null ? 70 : 14, 8);
+            rt.offsetMax = new Vector2(-14, -8);
 
             var drag = bg.AddComponent<HudDragHandler>();
             drag.CanvasRect = (RectTransform)_canvasGo.transform;
@@ -83,10 +108,18 @@ namespace GK2ZombieHQ
                 _timer = 0.5f;
 
                 int count = ZombieRoster.Count();
-                bool gameActive = count >= 0;            // -1 = сейв не загружен (главное меню)
+                int limit = ZombieRoster.Limit();
+                if (!_limitLogged) { _limitLogged = true; Plugin.Log.LogInfo("hud: count=" + count + " limit=" + limit); }
+
+                bool gameActive = count >= 0;
                 bool show = gameActive && _visible;
                 if (_canvasGo.activeSelf != show) _canvasGo.SetActive(show);
-                if (show && _text != null) _text.text = HudFormat.Count(ZombieText.Language, count, 0);
+                if (!show || _text == null) return;
+
+                if (limit > 0 && count > limit)
+                    _text.text = "<color=#ff5a4d>" + count + "</color> / " + limit;
+                else
+                    _text.text = HudFormat.CountShort(count, limit);
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("hud: " + ex.Message); }
         }
