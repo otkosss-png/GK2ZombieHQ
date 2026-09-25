@@ -91,14 +91,13 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("recall: " + ex); return false; }
         }
 
-        // Плавно ведём камеру к зомби.
+        // Включаем режим слежения камеры за зомби.
         internal static void FocusCamera(RosterEntry entry)
         {
             try
             {
-                if (entry == null || entry.Data == null) return;
-                var cam = CameraSystem.Instance != null ? CameraSystem.Instance.ActiveCameraController : null;
-                if (cam != null) cam.SetPosition(entry.Data.Position, 0.6f, null);
+                if (entry == null || entry.Data == null || ZombieCameraFollow.Instance == null) return;
+                ZombieCameraFollow.Instance.Follow(entry.Data, entry.Info != null ? entry.Info.Name : "");
             }
             catch (Exception ex) { Plugin.Log.LogWarning("focus camera: " + ex); }
         }

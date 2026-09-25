@@ -41,6 +41,7 @@ namespace GK2ZombieHQ
             DontDestroyOnLoad(go);
             go.AddComponent<ZombieHud>();
             go.AddComponent<ZombiePanel>();
+            go.AddComponent<ZombieCameraFollow>();
             Logger.LogInfo("GK2 Zombie HQ " + Version + " loaded.");
         }
 
