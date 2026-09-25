@@ -45,7 +45,7 @@ namespace GK2ZombieHQ
         private void EnsureSettings()
         {
             if (Mod.HudEnabled != null) return;
-            Mod.Language = Config.Bind("General", "Language", "auto", "auto | en | ru");
+            Mod.Language = Config.Bind("General", "Language", "en", "auto | en | ru");
             Mod.HudEnabled = Config.Bind("Hud", "Enabled", true, "Show the zombie count HUD");
             Mod.HudFontSize = Config.Bind("Hud", "FontSize", 60, "HUD font size");
             Mod.HudOffsetX = Config.Bind("Hud", "OffsetX", 12, "HUD X offset (px)");

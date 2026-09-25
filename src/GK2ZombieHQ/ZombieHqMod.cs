@@ -26,8 +26,8 @@ namespace GK2ZombieHQ
         public override void OnRegister(Gk2ModContext context)
         {
             var s = context.Settings;
-            Language = s.AddDropdown("General", "Language", "auto", new[] { "auto", "en", "ru" },
-                "Язык / Language", "auto — по системе, en, ru", 10);
+            Language = s.AddDropdown("General", "Language", "en", new[] { "auto", "en", "ru" },
+                "Language / Язык", "en, ru, auto (system)", 10);
             HudEnabled = s.AddToggle("Hud", "Enabled", true,
                 "HUD: счётчик зомби", "Показывать счётчик зомби на экране", 10);
             HudFontSize = s.AddIntSlider("Hud", "FontSize", 60, 12, 160,
