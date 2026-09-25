@@ -75,15 +75,18 @@ namespace GK2ZombieHQ
                 if (Input.GetKeyDown(Plugin.Mod.HudToggleKey.Value.MainKey))
                 {
                     _visible = !_visible;
-                    _canvasGo.SetActive(_visible);
+                    _timer = 0f;
                 }
 
                 _timer -= Time.unscaledDeltaTime;
-                if (_timer > 0f || _text == null || !_visible) return;
+                if (_timer > 0f) return;
                 _timer = 0.5f;
 
                 int count = ZombieRoster.Count();
-                _text.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, 0);
+                bool gameActive = count >= 0;            // -1 = сейв не загружен (главное меню)
+                bool show = gameActive && _visible;
+                if (_canvasGo.activeSelf != show) _canvasGo.SetActive(show);
+                if (show && _text != null) _text.text = HudFormat.Count(ZombieText.Language, count, 0);
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("hud: " + ex.Message); }
         }
