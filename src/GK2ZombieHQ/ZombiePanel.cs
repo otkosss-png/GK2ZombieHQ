@@ -93,17 +93,20 @@ namespace GK2ZombieHQ
             rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
         }
 
+        internal void Toggle()
+        {
+            if (_root == null) return;
+            bool show = !_root.activeSelf;
+            _root.SetActive(show);
+            if (show) Refresh();
+        }
+
         private void Update()
         {
             try
             {
                 if (_root == null) return;
-                if (Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey))
-                {
-                    bool show = !_root.activeSelf;
-                    _root.SetActive(show);
-                    if (show) Refresh();
-                }
+                if (Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey)) Toggle();
                 if (!_root.activeSelf) return;
                 _timer -= Time.unscaledDeltaTime;
                 if (_timer <= 0f) { _timer = 0.75f; Refresh(); }

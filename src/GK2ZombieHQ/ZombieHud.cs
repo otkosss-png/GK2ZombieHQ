@@ -29,10 +29,13 @@ namespace GK2ZombieHQ
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 1f;
+            _canvasGo.AddComponent<GraphicRaycaster>();
 
             var bg = new GameObject("Bg", typeof(RectTransform), typeof(Image));
             bg.transform.SetParent(_canvasGo.transform, false);
-            bg.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.5f);
+            var bgImage = bg.GetComponent<Image>();
+            bgImage.color = new Color(0f, 0f, 0f, 0.5f);
+            bgImage.raycastTarget = true;
             var brt = (RectTransform)bg.transform;
             brt.anchorMin = new Vector2(0, 1);
             brt.anchorMax = new Vector2(0, 1);
@@ -54,6 +57,11 @@ namespace GK2ZombieHQ
             rt.anchorMax = Vector2.one;
             rt.offsetMin = new Vector2(12, 8);
             rt.offsetMax = new Vector2(-12, -8);
+
+            var drag = bg.AddComponent<HudDragHandler>();
+            drag.CanvasRect = (RectTransform)_canvasGo.transform;
+            drag.Target = brt;
+            drag.Panel = GetComponent<ZombiePanel>();
 
             _visible = Plugin.Mod.HudEnabled.Value;
             _canvasGo.SetActive(_visible);
