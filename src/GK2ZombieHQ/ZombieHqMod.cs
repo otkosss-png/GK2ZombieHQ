@@ -32,7 +32,7 @@ namespace GK2ZombieHQ
                 "HUD: счётчик зомби", "Показывать счётчик зомби на экране", 10);
             HudFontSize = s.AddIntSlider("Hud", "FontSize", 34, 12, 72,
                 "Размер шрифта HUD", "", 2, 20);
-            HudOffsetX = s.AddIntSlider("Hud", "OffsetX", 12, 0, 1000,
+            HudOffsetX = s.AddIntSlider("Hud", "OffsetX", 520, 0, 1900,
                 "Отступ HUD по X", "", 2, 30);
             HudOffsetY = s.AddIntSlider("Hud", "OffsetY", 12, 0, 1000,
                 "Отступ HUD по Y", "", 2, 40);
