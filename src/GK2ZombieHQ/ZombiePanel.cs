@@ -94,7 +94,7 @@ namespace GK2ZombieHQ
             try
             {
                 if (_root == null) return;
-                if (Input.GetKeyDown(Plugin.Instance.PanelKey.Value))
+                if (Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey))
                 {
                     bool show = !_root.activeSelf;
                     _root.SetActive(show);
@@ -132,7 +132,7 @@ namespace GK2ZombieHQ
                 string label = e.Info.Name + "  ·  " + ZombieText.KindName(e.Info.Kind)
                     + "  ·  " + RosterLogic.Skulls(e.Info) + (e.Info.Collar != null ? "  ·  " + e.Info.Collar : "");
                 var name = UiFactory.Label("Name", row, label, 18, TextAlignmentOptions.Left);
-                name.enableWordWrapping = false;
+                name.textWrappingMode = TextWrappingModes.NoWrap;
                 name.overflowMode = TextOverflowModes.Ellipsis;
                 var nameLe = name.gameObject.AddComponent<LayoutElement>();
                 nameLe.flexibleWidth = 1;

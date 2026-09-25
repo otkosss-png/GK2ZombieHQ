@@ -7,38 +7,51 @@ using UnityEngine;
 
 namespace GK2ZombieHQ
 {
+    [BepInDependency("ru.superman4eg.gk2.framework")]
     [BepInPlugin(Guid, "GK2 Zombie HQ", "1.0.0")]
     public sealed class Plugin : BaseUnityPlugin
     {
         public const string Guid = "otkosss.gk2.zombiehq";
         public static Plugin Instance;
         public static ManualLogSource Log;
-
-        internal ConfigEntry<bool> HudEnabled;
-        internal ConfigEntry<int> HudOffsetX, HudOffsetY, HudFontSize;
-        internal ConfigEntry<KeyCode> HudToggleKey, PanelKey;
-        internal ConfigEntry<string> Language;
+        internal static ZombieHqMod Mod;
 
         private void Awake()
         {
             Instance = this;
             Log = Logger;
 
-            HudEnabled = Config.Bind("Hud", "Enabled", true, "Show the zombie count HUD");
-            HudOffsetX = Config.Bind("Hud", "OffsetX", 12, "HUD X offset (px)");
-            HudOffsetY = Config.Bind("Hud", "OffsetY", 12, "HUD Y offset (px)");
-            HudFontSize = Config.Bind("Hud", "FontSize", 34, "HUD font size");
-            HudToggleKey = Config.Bind("Keys", "HudToggle", KeyCode.F7, "Toggle HUD");
-            PanelKey = Config.Bind("Keys", "Panel", KeyCode.F8, "Open the zombie panel");
-            Language = Config.Bind("General", "Language", "auto", "auto | en | ru");
+            Mod = new ZombieHqMod();
+            try
+            {
+                GK2.Framework.FrameworkApi.RegisterMod(Mod, Config);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning("GK2 Framework register failed, using local config: " + ex.Message);
+            }
+            EnsureSettings();
 
-            ZombieText.Language = ResolveLanguage(Language.Value);
+            ZombieText.Language = ResolveLanguage(Mod.Language.Value);
 
             var go = new GameObject("GK2ZombieHQ");
             DontDestroyOnLoad(go);
             go.AddComponent<ZombieHud>();
             go.AddComponent<ZombiePanel>();
             Logger.LogInfo("GK2 Zombie HQ " + Version + " loaded.");
+        }
+
+        // Если Framework недоступен, регистрируем опции сами (тот же .cfg), чтобы мод работал.
+        private void EnsureSettings()
+        {
+            if (Mod.HudEnabled != null) return;
+            Mod.Language = Config.Bind("General", "Language", "auto", "auto | en | ru");
+            Mod.HudEnabled = Config.Bind("Hud", "Enabled", true, "Show the zombie count HUD");
+            Mod.HudFontSize = Config.Bind("Hud", "FontSize", 34, "HUD font size");
+            Mod.HudOffsetX = Config.Bind("Hud", "OffsetX", 12, "HUD X offset (px)");
+            Mod.HudOffsetY = Config.Bind("Hud", "OffsetY", 12, "HUD Y offset (px)");
+            Mod.HudToggleKey = Config.Bind("Keys", "HudToggle", new KeyboardShortcut(KeyCode.Z), "Toggle HUD");
+            Mod.PanelKey = Config.Bind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8), "Open the zombie panel");
         }
 
         internal static ZombieLanguage ResolveLanguage(string value)

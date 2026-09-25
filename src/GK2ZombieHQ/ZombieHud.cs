@@ -37,13 +37,13 @@ namespace GK2ZombieHQ
             brt.anchorMin = new Vector2(0, 1);
             brt.anchorMax = new Vector2(0, 1);
             brt.pivot = new Vector2(0, 1);
-            brt.anchoredPosition = new Vector2(Plugin.Instance.HudOffsetX.Value, -Plugin.Instance.HudOffsetY.Value);
+            brt.anchoredPosition = new Vector2(Plugin.Mod.HudOffsetX.Value, -Plugin.Mod.HudOffsetY.Value);
             brt.sizeDelta = new Vector2(340, 58);
 
             var textGo = new GameObject("Count", typeof(RectTransform));
             textGo.transform.SetParent(bg.transform, false);
             _text = textGo.AddComponent<TextMeshProUGUI>();
-            _text.fontSize = Plugin.Instance.HudFontSize.Value;
+            _text.fontSize = Plugin.Mod.HudFontSize.Value;
             _text.fontStyle = FontStyles.Bold;
             _text.alignment = TextAlignmentOptions.Left;
             _text.color = Color.white;
@@ -53,7 +53,7 @@ namespace GK2ZombieHQ
             rt.offsetMin = new Vector2(12, 8);
             rt.offsetMax = new Vector2(-12, -8);
 
-            _visible = Plugin.Instance.HudEnabled.Value;
+            _visible = Plugin.Mod.HudEnabled.Value;
             _canvasGo.SetActive(_visible);
         }
 
@@ -62,7 +62,7 @@ namespace GK2ZombieHQ
             try
             {
                 if (_canvasGo == null) return;
-                if (Input.GetKeyDown(Plugin.Instance.HudToggleKey.Value))
+                if (Input.GetKeyDown(Plugin.Mod.HudToggleKey.Value.MainKey))
                 {
                     _visible = !_visible;
                     _canvasGo.SetActive(_visible);
