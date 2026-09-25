@@ -40,7 +40,7 @@ namespace GK2ZombieHQ
             prt.anchorMin = new Vector2(0.5f, 0.5f);
             prt.anchorMax = new Vector2(0.5f, 0.5f);
             prt.pivot = new Vector2(0.5f, 0.5f);
-            prt.sizeDelta = new Vector2(720, 560);
+            prt.sizeDelta = new Vector2(960, 600);
             prt.anchoredPosition = Vector2.zero;
 
             var title = UiFactory.Label("Title", prt, ZombieText.Get("Title"), 26, TextAlignmentOptions.Left);
@@ -133,17 +133,21 @@ namespace GK2ZombieHQ
                 string label = e.Info.Name + "  ·  " + ZombieText.KindName(e.Info.Kind)
                     + "  ·  " + RosterLogic.Skulls(e.Info) + (e.Info.Collar != null ? "  ·  " + e.Info.Collar : "");
                 var name = UiFactory.Label("Name", row, label, 18, TextAlignmentOptions.Left);
-                name.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+                name.enableWordWrapping = false;
+                name.overflowMode = TextOverflowModes.Ellipsis;
+                var nameLe = name.gameObject.AddComponent<LayoutElement>();
+                nameLe.flexibleWidth = 1;
+                nameLe.minWidth = 0;
 
                 var openBtn = UiFactory.TextButton("Open", row, ZombieText.Get("Open"), 16);
-                openBtn.gameObject.AddComponent<LayoutElement>().preferredWidth = 110;
+                openBtn.gameObject.AddComponent<LayoutElement>().preferredWidth = 100;
                 var entry = e;
                 openBtn.onClick.AddListener(() => { ZombieRoster.OpenWindow(entry); _root.SetActive(false); });
 
                 if (e.Info.CanRecall)
                 {
                     var rec = UiFactory.TextButton("Recall", row, ZombieText.Get("Recall"), 16);
-                    rec.gameObject.AddComponent<LayoutElement>().preferredWidth = 110;
+                    rec.gameObject.AddComponent<LayoutElement>().preferredWidth = 100;
                     rec.onClick.AddListener(() => { ZombieRoster.Recall(entry); Refresh(); });
                 }
             }

@@ -27,7 +27,7 @@ namespace GK2ZombieHQ
             HudEnabled = Config.Bind("Hud", "Enabled", true, "Show the zombie count HUD");
             HudOffsetX = Config.Bind("Hud", "OffsetX", 12, "HUD X offset (px)");
             HudOffsetY = Config.Bind("Hud", "OffsetY", 12, "HUD Y offset (px)");
-            HudFontSize = Config.Bind("Hud", "FontSize", 22, "HUD font size");
+            HudFontSize = Config.Bind("Hud", "FontSize", 34, "HUD font size");
             HudToggleKey = Config.Bind("Keys", "HudToggle", KeyCode.F7, "Toggle HUD");
             PanelKey = Config.Bind("Keys", "Panel", KeyCode.F8, "Open the zombie panel");
             Language = Config.Bind("General", "Language", "auto", "auto | en | ru");

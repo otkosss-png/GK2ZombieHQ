@@ -25,21 +25,33 @@ namespace GK2ZombieHQ
             var canvas = _canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 5000;
-            _canvasGo.AddComponent<CanvasScaler>();
+            var scaler = _canvasGo.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 1f;
 
-            var textGo = new GameObject("Count");
-            textGo.transform.SetParent(_canvasGo.transform, false);
+            var bg = new GameObject("Bg", typeof(RectTransform), typeof(Image));
+            bg.transform.SetParent(_canvasGo.transform, false);
+            bg.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.5f);
+            var brt = (RectTransform)bg.transform;
+            brt.anchorMin = new Vector2(0, 1);
+            brt.anchorMax = new Vector2(0, 1);
+            brt.pivot = new Vector2(0, 1);
+            brt.anchoredPosition = new Vector2(Plugin.Instance.HudOffsetX.Value, -Plugin.Instance.HudOffsetY.Value);
+            brt.sizeDelta = new Vector2(340, 58);
+
+            var textGo = new GameObject("Count", typeof(RectTransform));
+            textGo.transform.SetParent(bg.transform, false);
             _text = textGo.AddComponent<TextMeshProUGUI>();
             _text.fontSize = Plugin.Instance.HudFontSize.Value;
-            _text.alignment = TextAlignmentOptions.TopLeft;
+            _text.fontStyle = FontStyles.Bold;
+            _text.alignment = TextAlignmentOptions.Left;
             _text.color = Color.white;
-
             var rt = _text.rectTransform;
-            rt.anchorMin = new Vector2(0, 1);
-            rt.anchorMax = new Vector2(0, 1);
-            rt.pivot = new Vector2(0, 1);
-            rt.anchoredPosition = new Vector2(Plugin.Instance.HudOffsetX.Value, -Plugin.Instance.HudOffsetY.Value);
-            rt.sizeDelta = new Vector2(420, 40);
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(12, 8);
+            rt.offsetMax = new Vector2(-12, -8);
 
             _visible = Plugin.Instance.HudEnabled.Value;
             _canvasGo.SetActive(_visible);
@@ -61,10 +73,7 @@ namespace GK2ZombieHQ
                 _timer = 0.5f;
 
                 int count = ZombieRoster.Count();
-                int limit = ZombieRoster.Limit();
-                if (count < 0) { _text.text = ""; return; }
-                _text.text = HudFormat.Count(ZombieText.Language, count, limit);
-                _text.color = HudFormat.AtLimit(count, limit) ? new Color(1f, 0.4f, 0.4f) : Color.white;
+                _text.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, 0);
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("hud: " + ex.Message); }
         }
