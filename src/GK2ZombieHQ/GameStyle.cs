@@ -1,4 +1,5 @@
 using System;
+using LazyBearTechnology;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,7 +19,7 @@ namespace GK2ZombieHQ
         internal static readonly Color Text = new Color(0.93f, 0.85f, 0.66f, 1f);
         internal static readonly Color Accent = new Color(1f, 0.66f, 0.33f, 1f);
         internal static readonly Color PanelBg = new Color(0.15f, 0.12f, 0.10f, 0.97f);
-        internal static readonly Color ButtonBg = new Color(0.26f, 0.21f, 0.16f, 0.98f);
+        internal static readonly Color ButtonBg = new Color(0.33f, 0.26f, 0.19f, 1f);
         internal static readonly Color Dim = new Color(0f, 0f, 0f, 0.62f);
 
         internal static TMP_FontAsset Font { get { Ensure(); return _font; } }
@@ -43,16 +44,24 @@ namespace GK2ZombieHQ
             }
             catch { }
 
+            // Спрайт кнопки: берём с настоящей игровой кнопки (Button/LazyButton), не с ползунка.
             try
             {
-                foreach (var s in Resources.FindObjectsOfTypeAll<Selectable>())
-                {
-                    var g = s != null ? s.targetGraphic as Image : null;
-                    if (g != null && g.sprite != null) { _buttonSprite = g.sprite; break; }
-                }
+                foreach (var b in Resources.FindObjectsOfTypeAll<Button>())
+                    if (TryGraphic(b != null ? b.targetGraphic as Image : null)) break;
             }
             catch { }
+            if (_buttonSprite == null)
+            {
+                try
+                {
+                    foreach (var b in Resources.FindObjectsOfTypeAll<LazyButton>())
+                        if (TryGraphic(b != null ? b.targetGraphic as Image : null)) break;
+                }
+                catch { }
+            }
 
+            // Фон панели: спрайт с «оконным» именем.
             try
             {
                 foreach (var img in Resources.FindObjectsOfTypeAll<Image>())
@@ -69,6 +78,17 @@ namespace GK2ZombieHQ
                 }
             }
             catch { }
+        }
+
+        private static bool TryGraphic(Image img)
+        {
+            var sp = img != null ? img.sprite : null;
+            if (sp == null) return false;
+            var r = sp.rect;
+            // Отсекаем тонкие «полосочки» (разделители/ползунки).
+            if (r.width < 16f || r.height < 16f) return false;
+            _buttonSprite = sp;
+            return true;
         }
     }
 }

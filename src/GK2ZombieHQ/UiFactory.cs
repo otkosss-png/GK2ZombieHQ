@@ -56,6 +56,7 @@ namespace GK2ZombieHQ
             {
                 img.color = GameStyle.ButtonBg;
             }
+            img.raycastTarget = true;
 
             var btn = rt.gameObject.AddComponent<Button>();
             btn.targetGraphic = img;
