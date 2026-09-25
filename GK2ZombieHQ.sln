@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F0BFE934-1173-4AD5-8101-3E950DBD942E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GK2ZombieHQ.Core", "src\GK2ZombieHQ.Core\GK2ZombieHQ.Core.csproj", "{AAEDC733-C626-43D8-BD99-42B1C024268D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{55DDF92D-D961-4DEE-9CC3-8169DA8BEA11}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GK2ZombieHQ.Core.Tests", "tests\GK2ZombieHQ.Core.Tests\GK2ZombieHQ.Core.Tests.csproj", "{AE3BD273-B7FF-4F06-9D61-51F12149BFC6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AAEDC733-C626-43D8-BD99-42B1C024268D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAEDC733-C626-43D8-BD99-42B1C024268D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAEDC733-C626-43D8-BD99-42B1C024268D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAEDC733-C626-43D8-BD99-42B1C024268D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE3BD273-B7FF-4F06-9D61-51F12149BFC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE3BD273-B7FF-4F06-9D61-51F12149BFC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE3BD273-B7FF-4F06-9D61-51F12149BFC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE3BD273-B7FF-4F06-9D61-51F12149BFC6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AAEDC733-C626-43D8-BD99-42B1C024268D} = {F0BFE934-1173-4AD5-8101-3E950DBD942E}
+		{AE3BD273-B7FF-4F06-9D61-51F12149BFC6} = {55DDF92D-D961-4DEE-9CC3-8169DA8BEA11}
+	EndGlobalSection
+EndGlobal
