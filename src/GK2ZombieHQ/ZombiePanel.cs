@@ -110,8 +110,7 @@ namespace GK2ZombieHQ
         private void Refresh()
         {
             int count = ZombieRoster.Count();
-            int limit = ZombieRoster.Limit();
-            _countLabel.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, limit);
+            _countLabel.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, 0);
 
             foreach (Transform child in _content) Destroy(child.gameObject);
             var entries = ZombieRoster.Load();
