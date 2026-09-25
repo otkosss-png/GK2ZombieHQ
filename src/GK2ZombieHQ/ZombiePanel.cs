@@ -29,46 +29,50 @@ namespace GK2ZombieHQ
             var canvas = _root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 5100;
-            _root.AddComponent<CanvasScaler>();
+            var scaler = _root.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
             _root.AddComponent<GraphicRaycaster>();
 
-            var overlay = UiFactory.PanelImage("Overlay", _root.transform, new Color(0f, 0f, 0f, 0.6f));
+            var overlay = UiFactory.PanelImage("Overlay", _root.transform, GameStyle.Dim);
             Stretch(overlay.rectTransform);
 
-            var panel = UiFactory.PanelImage("Panel", overlay.transform, new Color(0.10f, 0.10f, 0.12f, 0.98f));
+            // Панель всегда внутри экрана: якоря по краям, а не фиксированный размер.
+            var panel = UiFactory.PanelImage("Panel", overlay.transform, GameStyle.PanelBg, GameStyle.PanelSprite);
             var prt = panel.rectTransform;
-            prt.anchorMin = new Vector2(0.5f, 0.5f);
-            prt.anchorMax = new Vector2(0.5f, 0.5f);
+            prt.anchorMin = new Vector2(0.06f, 0.10f);
+            prt.anchorMax = new Vector2(0.94f, 0.90f);
             prt.pivot = new Vector2(0.5f, 0.5f);
-            prt.sizeDelta = new Vector2(960, 600);
-            prt.anchoredPosition = Vector2.zero;
+            prt.offsetMin = Vector2.zero;
+            prt.offsetMax = Vector2.zero;
 
-            var title = UiFactory.Label("Title", prt, ZombieText.Get("Title"), 26, TextAlignmentOptions.Left);
+            var title = UiFactory.Label("Title", prt, ZombieText.Get("Title"), 30, TextAlignmentOptions.Left, GameStyle.Accent);
             var trt = title.rectTransform;
             trt.anchorMin = new Vector2(0, 1); trt.anchorMax = new Vector2(1, 1);
-            trt.pivot = new Vector2(0.5f, 1); trt.anchoredPosition = new Vector2(0, -8);
-            trt.sizeDelta = new Vector2(-24, 36);
+            trt.pivot = new Vector2(0.5f, 1); trt.anchoredPosition = new Vector2(20, -14);
+            trt.sizeDelta = new Vector2(-160, 40);
 
-            var close = UiFactory.TextButton("Close", prt, ZombieText.Get("Close"), 18);
+            var close = UiFactory.TextButton("Close", prt, ZombieText.Get("Close"), 20);
             var crt = close.GetComponent<RectTransform>();
             crt.anchorMin = new Vector2(1, 1); crt.anchorMax = new Vector2(1, 1);
-            crt.pivot = new Vector2(1, 1); crt.anchoredPosition = new Vector2(-8, -8);
-            crt.sizeDelta = new Vector2(96, 32);
+            crt.pivot = new Vector2(1, 1); crt.anchoredPosition = new Vector2(-14, -14);
+            crt.sizeDelta = new Vector2(120, 40);
             close.onClick.AddListener(() => _root.SetActive(false));
 
-            _countLabel = UiFactory.Label("Count", prt, "", 20, TextAlignmentOptions.Left);
+            _countLabel = UiFactory.Label("Count", prt, "", 24, TextAlignmentOptions.Left);
             var cnt = _countLabel.rectTransform;
             cnt.anchorMin = new Vector2(0, 1); cnt.anchorMax = new Vector2(1, 1);
-            cnt.pivot = new Vector2(0.5f, 1); cnt.anchoredPosition = new Vector2(0, -48);
-            cnt.sizeDelta = new Vector2(-24, 28);
+            cnt.pivot = new Vector2(0.5f, 1); cnt.anchoredPosition = new Vector2(20, -60);
+            cnt.sizeDelta = new Vector2(-40, 30);
 
-            var viewport = UiFactory.PanelImage("Viewport", prt, new Color(0, 0, 0, 0.25f));
+            var viewport = UiFactory.PanelImage("Viewport", overlay.transform, new Color(0, 0, 0, 0.18f));
             var vrt = viewport.rectTransform;
+            vrt.SetParent(prt, false);
             vrt.anchorMin = new Vector2(0, 0); vrt.anchorMax = new Vector2(1, 1);
-            vrt.offsetMin = new Vector2(12, 12); vrt.offsetMax = new Vector2(-12, -84);
+            vrt.offsetMin = new Vector2(16, 16); vrt.offsetMax = new Vector2(-16, -100);
             viewport.gameObject.AddComponent<RectMask2D>();
-            var vlgRoot = viewport.gameObject.AddComponent<ScrollRect>();
-            var scroll = vlgRoot;
+            var scroll = viewport.gameObject.AddComponent<ScrollRect>();
 
             _content = UiFactory.Rect("Content", vrt);
             _content.anchorMin = new Vector2(0, 1); _content.anchorMax = new Vector2(1, 1);
@@ -76,7 +80,7 @@ namespace GK2ZombieHQ
             var vlg = _content.gameObject.AddComponent<VerticalLayoutGroup>();
             vlg.childControlHeight = true; vlg.childControlWidth = true;
             vlg.childForceExpandHeight = false; vlg.childForceExpandWidth = true;
-            vlg.spacing = 4; vlg.padding = new RectOffset(6, 6, 6, 6);
+            vlg.spacing = 6; vlg.padding = new RectOffset(4, 4, 4, 4);
             _content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             scroll.content = _content;
             scroll.viewport = vrt;
@@ -116,37 +120,39 @@ namespace GK2ZombieHQ
             var entries = ZombieRoster.Load();
             if (entries.Count == 0)
             {
-                var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 18, TextAlignmentOptions.Left);
-                empty.gameObject.AddComponent<LayoutElement>().preferredHeight = 32;
+                var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 20, TextAlignmentOptions.Left);
+                empty.gameObject.AddComponent<LayoutElement>().preferredHeight = 36;
                 return;
             }
 
             foreach (var e in entries)
             {
                 var row = UiFactory.Rect("Row", _content);
-                row.gameObject.AddComponent<LayoutElement>().preferredHeight = 40;
+                row.gameObject.AddComponent<LayoutElement>().preferredHeight = 46;
                 var hlg = row.gameObject.AddComponent<HorizontalLayoutGroup>();
                 hlg.childControlHeight = true; hlg.childControlWidth = true;
-                hlg.childForceExpandWidth = false; hlg.spacing = 6;
+                hlg.childForceExpandHeight = false; hlg.childForceExpandWidth = false;
+                hlg.spacing = 8;
+                hlg.padding = new RectOffset(8, 8, 4, 4);
 
                 string label = e.Info.Name + "  ·  " + ZombieText.KindName(e.Info.Kind)
                     + "  ·  " + RosterLogic.Skulls(e.Info) + (e.Info.Collar != null ? "  ·  " + e.Info.Collar : "");
-                var name = UiFactory.Label("Name", row, label, 18, TextAlignmentOptions.Left);
+                var name = UiFactory.Label("Name", row, label, 20, TextAlignmentOptions.Left);
                 name.textWrappingMode = TextWrappingModes.NoWrap;
                 name.overflowMode = TextOverflowModes.Ellipsis;
                 var nameLe = name.gameObject.AddComponent<LayoutElement>();
                 nameLe.flexibleWidth = 1;
                 nameLe.minWidth = 0;
 
-                var openBtn = UiFactory.TextButton("Open", row, ZombieText.Get("Open"), 16);
-                openBtn.gameObject.AddComponent<LayoutElement>().preferredWidth = 100;
+                var openBtn = UiFactory.TextButton("Open", row, ZombieText.Get("Open"), 18);
+                openBtn.gameObject.AddComponent<LayoutElement>().preferredWidth = 120;
                 var entry = e;
                 openBtn.onClick.AddListener(() => { ZombieRoster.OpenWindow(entry); _root.SetActive(false); });
 
                 if (e.Info.CanRecall)
                 {
-                    var rec = UiFactory.TextButton("Recall", row, ZombieText.Get("Recall"), 16);
-                    rec.gameObject.AddComponent<LayoutElement>().preferredWidth = 100;
+                    var rec = UiFactory.TextButton("Recall", row, ZombieText.Get("Recall"), 18);
+                    rec.gameObject.AddComponent<LayoutElement>().preferredWidth = 120;
                     rec.onClick.AddListener(() => { ZombieRoster.Recall(entry); Refresh(); });
                 }
             }

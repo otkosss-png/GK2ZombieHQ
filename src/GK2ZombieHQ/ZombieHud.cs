@@ -43,10 +43,12 @@ namespace GK2ZombieHQ
             var textGo = new GameObject("Count", typeof(RectTransform));
             textGo.transform.SetParent(bg.transform, false);
             _text = textGo.AddComponent<TextMeshProUGUI>();
+            if (GameStyle.Font != null) _text.font = GameStyle.Font;
+            if (GameStyle.FontMaterial != null) _text.fontSharedMaterial = GameStyle.FontMaterial;
             _text.fontSize = Plugin.Mod.HudFontSize.Value;
             _text.fontStyle = FontStyles.Bold;
             _text.alignment = TextAlignmentOptions.Left;
-            _text.color = Color.white;
+            _text.color = GameStyle.Text;
             var rt = _text.rectTransform;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
