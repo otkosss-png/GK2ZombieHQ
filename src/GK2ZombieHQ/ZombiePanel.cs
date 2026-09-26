@@ -208,6 +208,7 @@ namespace GK2ZombieHQ
                 if (!_root.activeSelf) return;
 
                 DriveGamepad();
+                DriveWheel();
             }
             catch (Exception ex) { Plugin.Log.LogWarning("panel: " + ex.Message); }
         }
@@ -238,6 +239,20 @@ namespace GK2ZombieHQ
             if (Mathf.Abs(dir.y) >= Mathf.Abs(dir.x)) MoveDirection(dir.y > 0f ? Vector2.up : Vector2.down);
             else MoveDirection(dir.x > 0f ? Vector2.right : Vector2.left);
             _navCooldown = 0.22f;
+        }
+
+        // Прокрутка колесом мыши (не полагаемся на EventSystem игры).
+        private void DriveWheel()
+        {
+            if (_scroll == null || _scroll.content == null || _scroll.viewport == null) return;
+            float wheel = 0f;
+            try { wheel = Input.mouseScrollDelta.y; } catch { }
+            if (Mathf.Abs(wheel) < 0.001f) return;
+
+            var content = _scroll.content;
+            float maxScroll = Mathf.Max(0f, content.rect.height - _scroll.viewport.rect.height);
+            float scroll = Mathf.Clamp(content.anchoredPosition.y - wheel * 90f, 0f, maxScroll);
+            content.anchoredPosition = new Vector2(content.anchoredPosition.x, scroll);
         }
 
         // Позиционная навигация: ближайшая кнопка в заданном направлении (с учётом выравнивания).
