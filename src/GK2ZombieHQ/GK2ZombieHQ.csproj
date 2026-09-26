@@ -6,7 +6,7 @@
     <AssemblyName>GK2ZombieHQ</AssemblyName>
     <RootNamespace>GK2ZombieHQ</RootNamespace>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <GameDir Condition="'$(GameDir)' == ''">E:\SteamLibrary\steamapps\common\Graveyard Keeper 2</GameDir>
     <ManagedDir>$(GameDir)\GraveyardKeeper2_Data\Managed</ManagedDir>
   </PropertyGroup>
