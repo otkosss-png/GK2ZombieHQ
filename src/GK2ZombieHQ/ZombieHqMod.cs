@@ -37,7 +37,7 @@ namespace GK2ZombieHQ
                 "Отступ HUD по X", "", 2, 30);
             HudOffsetY = s.AddIntSlider("Hud", "OffsetY", 1000, 0, 1080,
                 "Отступ HUD по Y", "", 2, 40);
-            HudMaxZombies = s.AddIntSlider("Hud", "MaxZombies", 0, 0, 300,
+            HudMaxZombies = s.AddIntSlider("Hud", "MaxZombies", 10, 0, 300,
                 "Allowed zombies (0 = hide)", "Shown as N / L; N turns red when above L", 1, 50);
             HudToggleKey = s.AddKeybind("Keys", "HudToggle", new KeyboardShortcut(KeyCode.Z),
                 "Клавиша HUD", "Скрыть/показать счётчик", 10);

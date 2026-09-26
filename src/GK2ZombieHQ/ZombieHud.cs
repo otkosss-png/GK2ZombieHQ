@@ -12,6 +12,7 @@ namespace GK2ZombieHQ
         private GameObject _canvasGo;
         private float _timer;
         private bool _visible = true;
+        private bool _limitLogged;
 
         private void Start()
         {
@@ -107,7 +108,8 @@ namespace GK2ZombieHQ
                 _timer = 0.5f;
 
                 int count = ZombieRoster.CountInWorld();
-                // В игре нет числового лимита зомби — берём настраиваемое значение (0 = не показывать).
+                // В игре нет числового лимита через API (zombies_limit_mechanic — флаг),
+                // поэтому «разрешено» задаётся в настройках (по умолчанию 10).
                 int limit = Plugin.Mod.HudMaxZombies.Value;
 
                 bool gameActive = count >= 0;
