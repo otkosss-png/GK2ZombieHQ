@@ -28,6 +28,31 @@ namespace GK2ZombieHQ
         internal static Sprite PanelSprite { get { Ensure(); return _panelSprite; } }
         internal static Sprite ZombieIcon { get { Ensure(); return _zombieIcon; } }
 
+        // Ищем спрайт игровой кнопки (LazyButton) — пересканируем при открытии панели,
+        // т.к. в главном меню и в игре кнопки разные.
+        internal static void RefreshButtonSprite()
+        {
+            try
+            {
+                foreach (var lb in Resources.FindObjectsOfTypeAll<LazyButton>())
+                {
+                    var img = lb != null ? lb.targetGraphic as Image : null;
+                    var sp = img != null ? img.sprite : null;
+                    if (sp == null || sp.name == null) continue;
+                    var n = sp.name.ToLowerInvariant();
+                    // Красная кнопка меню (как в «Паузе»): comm-btn-simple_red-active.
+                    if (n.Contains("btn-simple") && n.Contains("red") && !n.Contains("trade") && !n.Contains("green"))
+                    {
+                        _buttonSprite = sp;
+                        break;
+                    }
+                }
+                if (_buttonSprite != null) Plugin.Log.LogInfo("style: button sprite = " + _buttonSprite.name);
+                else Plugin.Log.LogInfo("style: button sprite = (none, using solid)");
+            }
+            catch (System.Exception ex) { Plugin.Log.LogWarning("style scan: " + ex.Message); }
+        }
+
         private static void Ensure()
         {
             if (_done) return;

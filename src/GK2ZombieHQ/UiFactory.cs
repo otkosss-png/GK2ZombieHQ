@@ -61,7 +61,7 @@ namespace GK2ZombieHQ
             var btn = rt.gameObject.AddComponent<Button>();
             btn.targetGraphic = img;
 
-            var label = Label("Label", rt, text, size, TextAlignmentOptions.Center, GameStyle.Text);
+            var label = Label("Label", rt, text, size, TextAlignmentOptions.Center, new Color(1f, 0.97f, 0.9f));
             var lrt = label.rectTransform;
             lrt.anchorMin = Vector2.zero;
             lrt.anchorMax = Vector2.one;

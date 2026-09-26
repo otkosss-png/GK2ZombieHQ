@@ -343,6 +343,7 @@ namespace GK2ZombieHQ
             int max = Plugin.Mod.HudMaxZombies.Value;
             _countLabel.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, max);
 
+            GameStyle.RefreshButtonSprite();
             foreach (Transform child in _content) Destroy(child.gameObject);
             _focusables.Clear();
             _baseColors.Clear();
