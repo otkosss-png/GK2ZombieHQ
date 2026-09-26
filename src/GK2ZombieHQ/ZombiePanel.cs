@@ -76,7 +76,9 @@ namespace GK2ZombieHQ
             var overlay = UiFactory.PanelImage("Overlay", _root.transform, GameStyle.Dim);
             Stretch(overlay.rectTransform);
 
-            var panel = UiFactory.PanelImage("Panel", overlay.transform, GameStyle.PanelBg, GameStyle.PanelSprite);
+            // Сплошной фон панели: спрайт-«шапка» не заливал весь прямоугольник,
+            // из-за чего нижние строки выглядели «за пределами» меню.
+            var panel = UiFactory.PanelImage("Panel", overlay.transform, new Color(0.12f, 0.10f, 0.09f, 0.985f));
             var prt = panel.rectTransform;
             prt.anchorMin = new Vector2(0.05f, 0.09f);
             prt.anchorMax = new Vector2(0.95f, 0.91f);
@@ -134,8 +136,10 @@ namespace GK2ZombieHQ
             {
                 var vp = _scroll.viewport;
                 var content = _scroll.content;
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                 float vpH = vp.rect.height;
-                float maxScroll = Mathf.Max(0f, content.rect.height - vpH);
+                float contentH = Mathf.Max(content.rect.height, LayoutUtility.GetPreferredHeight(content));
+                float maxScroll = Mathf.Max(0f, contentH - vpH);
                 var b = RectTransformUtility.CalculateRelativeRectTransformBounds(vp, item);
                 float itemMin = b.min.y - vp.rect.yMin;
                 float itemMax = b.max.y - vp.rect.yMin;
