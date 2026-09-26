@@ -44,6 +44,13 @@ namespace GK2ZombieHQ
                 {
                     var z = kv.Value;
                     if (z == null) continue;
+                    // Показываем только зомби, которые есть в мире. Лежащие на столе
+                    // воскрешения (ещё не готовые) и убранные в хранилище не показываем.
+                    bool inScene = true;
+                    try { inScene = sys.zombieOnSceneWgoIds == null || sys.zombieOnSceneWgoIds.Contains(z.UniqueId); }
+                    catch { }
+                    if (!inScene) continue;
+
                     result.Add(new RosterEntry
                     {
                         Data = z,
