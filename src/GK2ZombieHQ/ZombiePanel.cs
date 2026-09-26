@@ -158,17 +158,20 @@ namespace GK2ZombieHQ
                 float maxScroll = Mathf.Max(0f, contentH - vpH);
                 if (maxScroll <= 0.01f) return;
 
-                var b = RectTransformUtility.CalculateRelativeRectTransformBounds(vp, item);
-                float itemMin = b.min.y - vp.rect.yMin;
-                float itemMax = b.max.y - vp.rect.yMin;
+                // Позиция кнопки относительно контента (мировые углы → локальные контента).
+                var corners = new Vector3[4];
+                item.GetWorldCorners(corners);
+                float itemTop = content.InverseTransformPoint(corners[1]).y;
+                float itemBottom = content.InverseTransformPoint(corners[0]).y;
+                float contentTop = content.rect.yMax;
+                float topOffset = contentTop - itemTop;       // от верха контента до верха кнопки
+                float bottomOffset = contentTop - itemBottom; // от верха контента до низа кнопки
 
-                float scroll = content.anchoredPosition.y; // 0 (верх) .. maxScroll (низ)
-                if (itemMax > vpH) scroll += itemMax - vpH;
-                else if (itemMin < 0f) scroll += itemMin;
-                scroll = Mathf.Clamp(scroll, 0f, maxScroll);
-                Plugin.Log.LogInfo($"scroll: vpH={vpH:0} contentH={contentH:0} max={maxScroll:0} itemMin={itemMin:0} itemMax={itemMax:0} scroll={scroll:0}");
-                // ScrollRect сам выставляет позицию контента по нормализованному значению.
-                _scroll.verticalNormalizedPosition = 1f - scroll / maxScroll;
+                float s = maxScroll * (1f - _scroll.verticalNormalizedPosition); // 0 (верх) .. max (низ)
+                if (topOffset - s < 0f) s = topOffset;                        // кнопка выше вида
+                else if (bottomOffset - s > vpH) s = bottomOffset - vpH;      // кнопка ниже вида
+                s = Mathf.Clamp(s, 0f, maxScroll);
+                _scroll.verticalNormalizedPosition = 1f - s / maxScroll;
             }
             catch { }
         }
