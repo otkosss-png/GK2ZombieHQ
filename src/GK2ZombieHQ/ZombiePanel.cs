@@ -15,7 +15,6 @@ namespace GK2ZombieHQ
         private GameObject _root;
         private RectTransform _content;
         private TextMeshProUGUI _countLabel;
-        private float _timer;
 
         // Геймпад: свой список фокусируемых кнопок (legacy Input надёжнее GameKey-API).
         private readonly List<Button> _focusables = new List<Button>();
@@ -154,19 +153,23 @@ namespace GK2ZombieHQ
                 if (!_root.activeSelf) return;
 
                 DriveGamepad();
-
-                _timer -= Time.unscaledDeltaTime;
-                if (_timer <= 0f) { _timer = 0.75f; Refresh(); }
             }
             catch (Exception ex) { Plugin.Log.LogWarning("panel: " + ex.Message); }
         }
 
-        // A (JoystickButton0) — выбрать, B (JoystickButton1) — закрыть, стик/D-pad — фокус.
+        // A (JoystickButton0) — выбрать, B (JoystickButton1) — закрыть, стрелки/D-pad/стик — фокус.
         private void DriveGamepad()
         {
             if (Input.GetKeyDown(KeyCode.JoystickButton0)) { SelectFocused(); return; }
             if (Input.GetKeyDown(KeyCode.JoystickButton1)) { Close(); return; }
 
+            // Клавиатурные стрелки.
+            if (Input.GetKeyDown(KeyCode.UpArrow)) { MoveFocus(-1); return; }
+            if (Input.GetKeyDown(KeyCode.DownArrow)) { MoveFocus(1); return; }
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) { MoveFocus(-1); return; }
+            if (Input.GetKeyDown(KeyCode.RightArrow)) { MoveFocus(1); return; }
+
+            // Стик/D-pad.
             Vector2 dir = Vector2.zero;
             try { dir = LazyInput.GetDirection(); } catch { }
             if (dir.sqrMagnitude < 0.25f)
@@ -200,7 +203,9 @@ namespace GK2ZombieHQ
                 if (img == null) continue;
                 Color baseColor;
                 if (!_baseColors.TryGetValue(_focusables[i], out baseColor)) baseColor = Color.white;
-                img.color = i == idx ? GameStyle.Accent : baseColor;
+                bool focused = i == idx;
+                img.color = focused ? GameStyle.Accent : baseColor;
+                _focusables[i].transform.localScale = focused ? new Vector3(1.06f, 1.06f, 1f) : Vector3.one;
             }
         }
 
@@ -225,6 +230,7 @@ namespace GK2ZombieHQ
             {
                 var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 24, TextAlignmentOptions.Left);
                 empty.gameObject.AddComponent<LayoutElement>().preferredHeight = 40;
+                _focusIdx = -1;
                 return;
             }
 
@@ -271,6 +277,9 @@ namespace GK2ZombieHQ
                     RegisterButton(rec);
                 }
             }
+
+            // Сохраняем/восстанавливаем фокус, чтобы подсветка не пропадала.
+            if (_focusables.Count > 0) FocusButton(Mathf.Clamp(_focusIdx, 0, _focusables.Count - 1));
         }
     }
 }
