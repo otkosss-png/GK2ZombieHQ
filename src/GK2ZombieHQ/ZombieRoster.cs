@@ -35,16 +35,6 @@ namespace GK2ZombieHQ
             return Count();
         }
 
-        internal static int Limit()
-        {
-            try
-            {
-                var pd = MainGame.PlayerData;
-                return pd == null ? -1 : pd.GetResInt("zombies_limit_mechanic");
-            }
-            catch (Exception ex) { Plugin.Log.LogWarning("zombie limit: " + ex.Message); return -1; }
-        }
-
         internal static List<RosterEntry> Load()
         {
             var result = new List<RosterEntry>();

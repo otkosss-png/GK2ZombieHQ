@@ -357,7 +357,6 @@ namespace GK2ZombieHQ
 
         private void Refresh()
         {
-            int max = Plugin.Mod.HudMaxZombies.Value;
             GameStyle.RefreshButtonSprite();
             UiFactory.ApplyButtonSprite(_closeButton);
             foreach (Transform child in _content) Destroy(child.gameObject);
@@ -366,7 +365,7 @@ namespace GK2ZombieHQ
             _frames.Clear();
 
             var entries = ZombieRoster.Load();
-            _countLabel.text = HudFormat.Count(ZombieText.Language, entries.Count, max);
+            _countLabel.text = HudFormat.Count(ZombieText.Language, entries.Count, 0);
             if (entries.Count == 0)
             {
                 var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 24, TextAlignmentOptions.Left);

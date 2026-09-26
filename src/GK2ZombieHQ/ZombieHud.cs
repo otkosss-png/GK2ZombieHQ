@@ -12,7 +12,6 @@ namespace GK2ZombieHQ
         private GameObject _canvasGo;
         private float _timer;
         private bool _visible = true;
-        private bool _limitLogged;
 
         private void Start()
         {
@@ -108,19 +107,15 @@ namespace GK2ZombieHQ
                 _timer = 0.5f;
 
                 int count = ZombieRoster.CountInWorld();
-                // В игре нет числового лимита через API (zombies_limit_mechanic — флаг),
-                // поэтому «разрешено» задаётся в настройках (по умолчанию 10).
-                int limit = Plugin.Mod.HudMaxZombies.Value;
 
                 bool gameActive = count >= 0;
                 bool show = gameActive && _visible;
                 if (_canvasGo.activeSelf != show) _canvasGo.SetActive(show);
                 if (!show || _text == null) return;
 
-                if (limit > 0 && count > limit)
-                    _text.text = "<color=#ff5a4d>" + count + "</color> / " + limit;
-                else
-                    _text.text = HudFormat.CountShort(count, limit);
+                // Игра не отдаёт числовой лимит (порог дебафа молитвы) через API,
+                // поэтому показываем только текущее количество зомби.
+                _text.text = HudFormat.CountShort(count, 0);
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("hud: " + ex.Message); }
         }
