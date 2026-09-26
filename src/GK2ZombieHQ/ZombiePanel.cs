@@ -125,6 +125,7 @@ namespace GK2ZombieHQ
             scroll.content = _content;
             scroll.viewport = vrt;
             scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
             _scroll = scroll;
         }
 
@@ -140,15 +141,18 @@ namespace GK2ZombieHQ
                 float vpH = vp.rect.height;
                 float contentH = Mathf.Max(content.rect.height, LayoutUtility.GetPreferredHeight(content));
                 float maxScroll = Mathf.Max(0f, contentH - vpH);
+                if (maxScroll <= 0.01f) return;
+
                 var b = RectTransformUtility.CalculateRelativeRectTransformBounds(vp, item);
                 float itemMin = b.min.y - vp.rect.yMin;
                 float itemMax = b.max.y - vp.rect.yMin;
 
-                float scroll = content.anchoredPosition.y;
+                float scroll = content.anchoredPosition.y; // 0 (верх) .. maxScroll (низ)
                 if (itemMax > vpH) scroll += itemMax - vpH;
                 else if (itemMin < 0f) scroll += itemMin;
                 scroll = Mathf.Clamp(scroll, 0f, maxScroll);
-                content.anchoredPosition = new Vector2(content.anchoredPosition.x, scroll);
+                // ScrollRect сам выставляет позицию контента по нормализованному значению.
+                _scroll.verticalNormalizedPosition = 1f - scroll / maxScroll;
             }
             catch { }
         }
