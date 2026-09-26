@@ -19,6 +19,7 @@ namespace GK2ZombieHQ
         // Геймпад: свой список фокусируемых кнопок (legacy Input надёжнее GameKey-API).
         private readonly List<Button> _focusables = new List<Button>();
         private readonly Dictionary<Button, Color> _baseColors = new Dictionary<Button, Color>();
+        private readonly Dictionary<Button, GameObject> _frames = new Dictionary<Button, GameObject>();
         private int _focusIdx = -1;
         private float _navCooldown;
 
@@ -134,6 +135,35 @@ namespace GK2ZombieHQ
             _focusables.Add(btn);
             var img = btn.targetGraphic as Image;
             _baseColors[btn] = img != null ? img.color : Color.white;
+            _frames[btn] = CreateFocusFrame((RectTransform)btn.transform);
+        }
+
+        // Рамка вокруг выбранного элемента — как у игровых кнопок с геймпадом.
+        private static GameObject CreateFocusFrame(RectTransform parent)
+        {
+            var frame = new GameObject("FocusFrame", typeof(RectTransform));
+            frame.transform.SetParent(parent, false);
+            var frt = (RectTransform)frame.transform;
+            frt.anchorMin = Vector2.zero; frt.anchorMax = Vector2.one;
+            frt.offsetMin = new Vector2(-5, -5); frt.offsetMax = new Vector2(5, 5);
+            Bar(frt, "Top", new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, 3), Vector2.zero);
+            Bar(frt, "Bottom", new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 3), Vector2.zero);
+            Bar(frt, "Left", new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(3, 0), Vector2.zero);
+            Bar(frt, "Right", new Vector2(1, 0), new Vector2(1, 1), new Vector2(1, 0.5f), new Vector2(3, 0), Vector2.zero);
+            frame.SetActive(false);
+            return frame;
+        }
+
+        private static void Bar(RectTransform parent, string name, Vector2 aMin, Vector2 aMax, Vector2 pivot, Vector2 size, Vector2 pos)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = aMin; rt.anchorMax = aMax; rt.pivot = pivot;
+            rt.sizeDelta = size; rt.anchoredPosition = pos;
+            var img = go.GetComponent<Image>();
+            img.color = GameStyle.Accent;
+            img.raycastTarget = false;
         }
 
         internal void Toggle()
@@ -199,13 +229,16 @@ namespace GK2ZombieHQ
             _focusIdx = idx;
             for (int i = 0; i < _focusables.Count; i++)
             {
-                var img = _focusables[i].targetGraphic as Image;
-                if (img == null) continue;
-                Color baseColor;
-                if (!_baseColors.TryGetValue(_focusables[i], out baseColor)) baseColor = Color.white;
                 bool focused = i == idx;
-                img.color = focused ? GameStyle.Accent : baseColor;
-                _focusables[i].transform.localScale = focused ? new Vector3(1.06f, 1.06f, 1f) : Vector3.one;
+                var img = _focusables[i].targetGraphic as Image;
+                if (img != null)
+                {
+                    Color baseColor;
+                    if (!_baseColors.TryGetValue(_focusables[i], out baseColor)) baseColor = Color.white;
+                    img.color = focused ? GameStyle.Accent : baseColor;
+                }
+                GameObject frame;
+                if (_frames.TryGetValue(_focusables[i], out frame) && frame != null) frame.SetActive(focused);
             }
         }
 
@@ -224,6 +257,7 @@ namespace GK2ZombieHQ
             foreach (Transform child in _content) Destroy(child.gameObject);
             _focusables.Clear();
             _baseColors.Clear();
+            _frames.Clear();
 
             var entries = ZombieRoster.Load();
             if (entries.Count == 0)
