@@ -15,9 +15,12 @@ namespace GK2ZombieHQ
         private static Sprite _panelSprite;
         private static Sprite _zombieIcon;
         private static Sprite _whiteSkull, _redSkull;
+        private static TMP_SpriteAsset _spriteAsset;
 
         internal static Sprite WhiteSkull { get { Ensure(); return _whiteSkull; } }
         internal static Sprite RedSkull { get { Ensure(); return _redSkull; } }
+        // TMP-ассет спрайтов, в котором есть глифы "skull"/"rskull".
+        internal static TMP_SpriteAsset SpriteAsset { get { Ensure(); return _spriteAsset; } }
 
         internal static readonly Color Text = new Color(0.93f, 0.85f, 0.66f, 1f);
         internal static readonly Color Accent = new Color(1f, 0.66f, 0.33f, 1f);
@@ -54,14 +57,17 @@ namespace GK2ZombieHQ
                 if (_buttonSprite != null) Plugin.Log.LogInfo("style: button sprite = " + _buttonSprite.name);
                 else Plugin.Log.LogInfo("style: button sprite = (none, using solid)");
 
-                var col = LazySingletonSO<EasySpritesCollection>.Instance;
-                if (col != null)
+                // Черепа — глифы TMP (<sprite name="skull"/"rskull">). Ищем ассет, где они есть.
+                _spriteAsset = TMP_Settings.defaultSpriteAsset;
+                if (_spriteAsset == null || _spriteAsset.GetSpriteIndexFromName("skull") < 0)
                 {
-                    _whiteSkull = col.GetSprite("skull") ?? col.GetSprite("skull-zombie_window");
-                    _redSkull = col.GetSprite("rskull") ?? col.GetSprite("rskull-zombie_window");
-                    Plugin.Log.LogInfo("style: skulls white=" + (_whiteSkull != null ? _whiteSkull.name : "none")
-                        + " red=" + (_redSkull != null ? _redSkull.name : "none"));
+                    _spriteAsset = null;
+                    foreach (var sa in Resources.FindObjectsOfTypeAll<TMP_SpriteAsset>())
+                    {
+                        if (sa != null && sa.GetSpriteIndexFromName("skull") >= 0) { _spriteAsset = sa; break; }
+                    }
                 }
+                Plugin.Log.LogInfo("style: skull glyph asset = " + (_spriteAsset != null ? _spriteAsset.name : "none"));
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("style scan: " + ex.Message); }
         }

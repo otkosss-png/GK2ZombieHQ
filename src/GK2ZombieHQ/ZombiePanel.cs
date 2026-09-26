@@ -313,28 +313,20 @@ namespace GK2ZombieHQ
             if (best >= 0) FocusButton(best);
         }
 
-        // Иконка черепа (белый/красный) + число.
-        private static void MakeSkull(RectTransform row, float rightOffset, Sprite sprite, int count)
+        // Иконка черепа (белый/красный глиф TMP) + число.
+        private static void MakeSkull(RectTransform row, float rightOffset, string glyph, int count)
         {
             var g = UiFactory.Rect("Skull", row);
             g.anchorMin = new Vector2(1, 0.5f); g.anchorMax = new Vector2(1, 0.5f);
-            g.pivot = new Vector2(1, 0.5f); g.sizeDelta = new Vector2(96, 50); g.anchoredPosition = new Vector2(rightOffset, 0);
+            g.pivot = new Vector2(1, 0.5f); g.sizeDelta = new Vector2(110, 50); g.anchoredPosition = new Vector2(rightOffset, 0);
 
-            if (sprite != null)
-            {
-                var icon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                icon.transform.SetParent(g, false);
-                var irt = (RectTransform)icon.transform;
-                irt.anchorMin = new Vector2(0, 0.5f); irt.anchorMax = new Vector2(0, 0.5f); irt.pivot = new Vector2(0, 0.5f);
-                irt.sizeDelta = new Vector2(40, 40); irt.anchoredPosition = Vector2.zero;
-                var img = icon.GetComponent<Image>();
-                img.sprite = sprite; img.preserveAspect = true; img.raycastTarget = false;
-            }
-
-            var num = UiFactory.Label("N", g, count.ToString(), 30, TextAlignmentOptions.Left);
-            var nrt = num.rectTransform;
-            nrt.anchorMin = new Vector2(0, 0.5f); nrt.anchorMax = new Vector2(0, 0.5f); nrt.pivot = new Vector2(0, 0.5f);
-            nrt.sizeDelta = new Vector2(52, 44); nrt.anchoredPosition = new Vector2(sprite != null ? 42 : 0, 0);
+            var label = UiFactory.Label("Value", g, "", 30, TextAlignmentOptions.Left);
+            var sa = GameStyle.SpriteAsset;
+            if (sa != null) label.spriteAsset = sa;
+            label.text = (sa != null ? "<sprite name=\"" + glyph + "\"> " : "") + count;
+            var lrt = label.rectTransform;
+            lrt.anchorMin = new Vector2(0, 0.5f); lrt.anchorMax = new Vector2(0, 0.5f); lrt.pivot = new Vector2(0, 0.5f);
+            lrt.sizeDelta = new Vector2(105, 44); lrt.anchoredPosition = Vector2.zero;
         }
 
         private void FocusButton(int idx)
@@ -395,7 +387,7 @@ namespace GK2ZombieHQ
                 name.overflowMode = TextOverflowModes.Ellipsis;
                 var nrt = name.rectTransform;
                 nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
-                nrt.offsetMin = new Vector2(16, 6); nrt.offsetMax = new Vector2(-1190, -6);
+                nrt.offsetMin = new Vector2(16, 6); nrt.offsetMax = new Vector2(-1220, -6);
 
                 if (!string.IsNullOrEmpty(e.Info.Collar))
                 {
@@ -405,8 +397,8 @@ namespace GK2ZombieHQ
                     clrt.pivot = new Vector2(1, 0.5f); clrt.sizeDelta = new Vector2(320, 50); clrt.anchoredPosition = new Vector2(-660, 0);
                 }
 
-                MakeSkull(row, -985, GameStyle.RedSkull, e.Info.RedSkulls);
-                MakeSkull(row, -1085, GameStyle.WhiteSkull, e.Info.WhiteSkulls);
+                MakeSkull(row, -985, "rskull", e.Info.RedSkulls);
+                MakeSkull(row, -1100, "skull", e.Info.WhiteSkulls);
 
                 var entry = e;
 
