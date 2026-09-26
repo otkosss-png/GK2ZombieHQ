@@ -106,7 +106,7 @@ namespace GK2ZombieHQ
                 if (_timer > 0f) return;
                 _timer = 0.5f;
 
-                int count = ZombieRoster.Count();
+                int count = ZombieRoster.CountInWorld();
                 // В игре нет числового лимита зомби — берём настраиваемое значение (0 = не показывать).
                 int limit = Plugin.Mod.HudMaxZombies.Value;
 

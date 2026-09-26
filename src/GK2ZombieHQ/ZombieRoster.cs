@@ -23,6 +23,18 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("zombie count: " + ex.Message); return -1; }
         }
 
+        // Число зомби, находящихся в мире (без лежащих на столе воскрешения/в хранилище).
+        internal static int CountInWorld()
+        {
+            try
+            {
+                var sys = MainGame.ZombieSystemData;
+                if (sys != null && sys.zombieOnSceneWgoIds != null) return sys.zombieOnSceneWgoIds.Count;
+            }
+            catch { }
+            return Count();
+        }
+
         internal static int Limit()
         {
             try
