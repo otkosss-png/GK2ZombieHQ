@@ -15,6 +15,7 @@ namespace GK2ZombieHQ
         private GameObject _root;
         private RectTransform _content;
         private TextMeshProUGUI _countLabel;
+        private ScrollRect _scroll;
 
         // Геймпад: свой список фокусируемых кнопок (legacy Input надёжнее GameKey-API).
         private readonly List<Button> _focusables = new List<Button>();
@@ -122,6 +123,30 @@ namespace GK2ZombieHQ
             scroll.content = _content;
             scroll.viewport = vrt;
             scroll.horizontal = false;
+            _scroll = scroll;
+        }
+
+        // Прокручивает список так, чтобы выбранная кнопка была видна.
+        private void EnsureVisible(RectTransform item)
+        {
+            if (_scroll == null || _scroll.viewport == null || _scroll.content == null || item == null) return;
+            try
+            {
+                var vp = _scroll.viewport;
+                var content = _scroll.content;
+                float vpH = vp.rect.height;
+                float maxScroll = Mathf.Max(0f, content.rect.height - vpH);
+                var b = RectTransformUtility.CalculateRelativeRectTransformBounds(vp, item);
+                float itemMin = b.min.y - vp.rect.yMin;
+                float itemMax = b.max.y - vp.rect.yMin;
+
+                float scroll = content.anchoredPosition.y;
+                if (itemMax > vpH) scroll += itemMax - vpH;
+                else if (itemMin < 0f) scroll += itemMin;
+                scroll = Mathf.Clamp(scroll, 0f, maxScroll);
+                content.anchoredPosition = new Vector2(content.anchoredPosition.x, scroll);
+            }
+            catch { }
         }
 
         private static void Stretch(RectTransform rt)
@@ -259,6 +284,8 @@ namespace GK2ZombieHQ
                 GameObject frame;
                 if (_frames.TryGetValue(_focusables[i], out frame) && frame != null) frame.SetActive(focused);
             }
+            if (idx >= 0 && idx < _focusables.Count)
+                EnsureVisible(_focusables[idx].transform as RectTransform);
         }
 
         private void SelectFocused()
