@@ -43,8 +43,11 @@ namespace GK2ZombieHQ
         {
             try
             {
-                if (paused) MainGame.PauseGame();
-                else MainGame.UnpauseGame();
+                var mg = MainGame.Instance;
+                if (mg == null) return;
+                var mi = typeof(MainGame).GetMethod(paused ? "PauseGame" : "UnpauseGame",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (mi != null) mi.Invoke(mg, null);
             }
             catch (Exception ex) { Plugin.Log.LogWarning("pause: " + ex.Message); }
         }
