@@ -194,10 +194,10 @@ namespace GK2ZombieHQ
             if (Input.GetKeyDown(KeyCode.JoystickButton1)) { Close(); return; }
 
             // Клавиатурные стрелки.
-            if (Input.GetKeyDown(KeyCode.UpArrow)) { MoveFocus(-1); return; }
-            if (Input.GetKeyDown(KeyCode.DownArrow)) { MoveFocus(1); return; }
-            if (Input.GetKeyDown(KeyCode.LeftArrow)) { MoveFocus(-1); return; }
-            if (Input.GetKeyDown(KeyCode.RightArrow)) { MoveFocus(1); return; }
+            if (Input.GetKeyDown(KeyCode.UpArrow)) { MoveDirection(Vector2.up); return; }
+            if (Input.GetKeyDown(KeyCode.DownArrow)) { MoveDirection(Vector2.down); return; }
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) { MoveDirection(Vector2.left); return; }
+            if (Input.GetKeyDown(KeyCode.RightArrow)) { MoveDirection(Vector2.right); return; }
 
             // Стик/D-pad.
             Vector2 dir = Vector2.zero;
@@ -210,18 +210,37 @@ namespace GK2ZombieHQ
             _navCooldown -= Time.unscaledDeltaTime;
             if (_navCooldown > 0f || dir.sqrMagnitude < 0.25f) return;
 
-            if (Mathf.Abs(dir.y) >= Mathf.Abs(dir.x)) MoveFocus(dir.y > 0f ? -1 : 1);
-            else MoveFocus(dir.x > 0f ? 1 : -1);
+            if (Mathf.Abs(dir.y) >= Mathf.Abs(dir.x)) MoveDirection(dir.y > 0f ? Vector2.up : Vector2.down);
+            else MoveDirection(dir.x > 0f ? Vector2.right : Vector2.left);
             _navCooldown = 0.22f;
         }
 
-        private void MoveFocus(int delta)
+        // Позиционная навигация: ближайшая кнопка в заданном направлении (с учётом выравнивания).
+        private void MoveDirection(Vector2 dir)
         {
             if (_focusables.Count == 0) return;
-            int i = _focusIdx + delta;
-            if (i < 0) i += _focusables.Count;
-            if (i >= _focusables.Count) i -= _focusables.Count;
-            FocusButton(i);
+            if (_focusIdx < 0) { FocusButton(0); return; }
+
+            RectTransform cur = _focusables[_focusIdx].transform as RectTransform;
+            if (cur == null) return;
+            Vector2 curPos = cur.position;
+            Vector2 cross = new Vector2(-dir.y, dir.x);
+
+            int best = -1;
+            float bestScore = float.MaxValue;
+            for (int i = 0; i < _focusables.Count; i++)
+            {
+                if (i == _focusIdx) continue;
+                var rt = _focusables[i].transform as RectTransform;
+                if (rt == null) continue;
+                Vector2 d = (Vector2)rt.position - curPos;
+                float along = Vector2.Dot(d, dir);
+                if (along <= 1f) continue;                       // не в этом направлении
+                float off = Mathf.Abs(Vector2.Dot(d, cross));
+                float score = along + off * 3f;                  // ближе и ровнее — лучше
+                if (score < bestScore) { bestScore = score; best = i; }
+            }
+            if (best >= 0) FocusButton(best);
         }
 
         private void FocusButton(int idx)
