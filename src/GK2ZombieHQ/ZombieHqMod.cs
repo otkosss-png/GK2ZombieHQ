@@ -20,7 +20,7 @@ namespace GK2ZombieHQ
         internal ConfigEntry<bool> HudEnabled;
         internal ConfigEntry<int> HudFontSize, HudOffsetX, HudOffsetY, HudMaxZombies;
         internal ConfigEntry<KeyboardShortcut> HudToggleKey, PanelKey;
-        internal ConfigEntry<string> PanelGamepad;
+        internal ConfigEntry<int> PanelGamepad;
 
         public override Gk2ModMetadata Metadata => _metadata;
 
@@ -43,8 +43,8 @@ namespace GK2ZombieHQ
                 "Клавиша HUD", "Скрыть/показать счётчик", 10);
             PanelKey = s.AddKeybind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8),
                 "Клавиша панели", "Открыть «Зомби-штаб»", 20);
-            PanelGamepad = s.AddText("Keys", "PanelGamepad", "CheatButton",
-                "Gamepad: open panel", "LazyBear GameKey name (gamepad) that toggles the panel; empty = off", 30);
+            PanelGamepad = s.AddIntSlider("Keys", "PanelGamepad", 6, -1, 19,
+                "Gamepad: open panel (button #)", "Joystick button index (0=A,1=B,2=X,3=Y,6=Back,7=Start); -1 = off", 1, 30);
         }
     }
 }

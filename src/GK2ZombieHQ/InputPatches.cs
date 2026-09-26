@@ -1,11 +1,10 @@
 using HarmonyLib;
-using LazyBearTechnology;
 using UnityEngine;
 
 namespace GK2ZombieHQ
 {
     // Пока открыта наша панель (или режим камеры): игровой ввод не обрабатываем.
-    // Esc/B закрывает панель и выходит из камеры; геймпадная GameKey открывает панель.
+    // Esc / геймпад B закрывает панель и выходит из камеры; кнопка геймпада открывает панель.
     [HarmonyPatch(typeof(PlayerInputHandler), "UpdateInput")]
     internal static class PlayerInputHandler_UpdateInput_Patch
     {
@@ -15,7 +14,7 @@ namespace GK2ZombieHQ
             var cam = ZombieCameraFollow.Instance;
             if (cam != null && cam.IsActive)
             {
-                if (Input.GetKeyDown(KeyCode.Escape) || LazyInput.GetKeyDown(GameKey.InGameMenu)) cam.Exit();
+                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton1)) cam.Exit();
                 return false;
             }
 

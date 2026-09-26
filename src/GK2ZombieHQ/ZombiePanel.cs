@@ -16,8 +16,12 @@ namespace GK2ZombieHQ
         private RectTransform _content;
         private TextMeshProUGUI _countLabel;
         private float _timer;
-        private GamepadNavigationController _nav;
-        private readonly List<GamepadNavigationItem> _navItems = new List<GamepadNavigationItem>();
+
+        // Геймпад: свой список фокусируемых кнопок (legacy Input надёжнее GameKey-API).
+        private readonly List<Button> _focusables = new List<Button>();
+        private readonly Dictionary<Button, Color> _baseColors = new Dictionary<Button, Color>();
+        private int _focusIdx = -1;
+        private float _navCooldown;
 
         internal bool IsOpen => _root != null && _root.activeSelf;
 
@@ -30,24 +34,17 @@ namespace GK2ZombieHQ
         {
             if (_root == null) return;
             _root.SetActive(false);
-            try { if (_nav != null) _nav.Disable(); } catch { }
         }
 
-        // Геймпад: открытие панели по настраиваемой GameKey (см. Keys.PanelGamepad).
+        // Геймпад: открыть панель по индексу кнопки (Keys.PanelGamepad).
         internal static bool TryGamepadOpen()
         {
             try
             {
-                if (Plugin.Mod == null) return false;
-                var name = Plugin.Mod.PanelGamepad.Value;
-                if (string.IsNullOrEmpty(name)) return false;
-                // GameKey — не enum, а класс со статическими полями; ищем по имени.
-                var field = typeof(GameKey).GetField(name,
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                    | System.Reflection.BindingFlags.IgnoreCase);
-                var key = field != null ? field.GetValue(null) as GameKey : null;
-                if (key == null || key == GameKey.None) return false;
-                return LazyInput.GetKeyDown(key);
+                if (Plugin.Mod == null || Plugin.Mod.PanelGamepad == null) return false;
+                int idx = Plugin.Mod.PanelGamepad.Value;
+                if (idx < 0 || idx > 19) return false;
+                return Input.GetKeyDown((KeyCode)((int)KeyCode.JoystickButton0 + idx));
             }
             catch { return false; }
         }
@@ -74,7 +71,6 @@ namespace GK2ZombieHQ
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
             _root.AddComponent<GraphicRaycaster>();
-            _nav = _root.AddComponent<GamepadNavigationController>();
 
             var overlay = UiFactory.PanelImage("Overlay", _root.transform, GameStyle.Dim);
             Stretch(overlay.rectTransform);
@@ -99,7 +95,7 @@ namespace GK2ZombieHQ
             crt.pivot = new Vector2(1, 1); crt.anchoredPosition = new Vector2(-16, -16);
             crt.sizeDelta = new Vector2(200, 60);
             close.onClick.AddListener(Close);
-            RegisterNav(close);
+            RegisterButton(close);
 
             _countLabel = UiFactory.Label("Count", prt, "", 44, TextAlignmentOptions.Left);
             var cnt = _countLabel.rectTransform;
@@ -134,19 +130,11 @@ namespace GK2ZombieHQ
             rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
         }
 
-        private GamepadNavigationItem RegisterNav(Button btn)
+        private void RegisterButton(Button btn)
         {
-            var item = btn.gameObject.AddComponent<GamepadNavigationItem>();
+            _focusables.Add(btn);
             var img = btn.targetGraphic as Image;
-            item.OnSelect.AddListener(() => btn.onClick.Invoke());
-            if (img != null)
-            {
-                var baseColor = img.color;
-                item.OnFocus.AddListener(() => img.color = GameStyle.Accent);
-                item.OnUnfocus.AddListener(() => img.color = baseColor);
-            }
-            _navItems.Add(item);
-            return item;
+            _baseColors[btn] = img != null ? img.color : Color.white;
         }
 
         internal void Toggle()
@@ -155,7 +143,6 @@ namespace GK2ZombieHQ
             bool show = !_root.activeSelf;
             _root.SetActive(show);
             if (show) Refresh();
-            else { try { if (_nav != null) _nav.Disable(); } catch { } }
         }
 
         private void Update()
@@ -163,7 +150,7 @@ namespace GK2ZombieHQ
             try
             {
                 if (_root == null) return;
-                if (Plugin.Mod != null && Plugin.Mod.PanelKey != null && Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey)) Toggle();
+                if (Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey)) Toggle();
                 if (!_root.activeSelf) return;
 
                 DriveGamepad();
@@ -174,15 +161,53 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("panel: " + ex.Message); }
         }
 
-        // Игра не опрашивает GamepadNavigationController сама — ведём навигацию из LazyInput.
+        // A (JoystickButton0) — выбрать, B (JoystickButton1) — закрыть, стик/D-pad — фокус.
         private void DriveGamepad()
         {
-            if (_nav == null || !_nav.IsEnabled) return;
-            if (LazyInput.GetKeyDown(GameKey.Up)) _nav.Navigate(GUIDirection.Up);
-            else if (LazyInput.GetKeyDown(GameKey.Down)) _nav.Navigate(GUIDirection.Down);
-            else if (LazyInput.GetKeyDown(GameKey.Left)) _nav.Navigate(GUIDirection.Left);
-            else if (LazyInput.GetKeyDown(GameKey.Right)) _nav.Navigate(GUIDirection.Right);
-            else if (LazyInput.GetKeyDown(GameKey.Interaction)) _nav.SelectFocusedItem();
+            if (Input.GetKeyDown(KeyCode.JoystickButton0)) { SelectFocused(); return; }
+            if (Input.GetKeyDown(KeyCode.JoystickButton1)) { Close(); return; }
+
+            Vector2 dir = Vector2.zero;
+            try { dir = LazyInput.GetDirection(); } catch { }
+            if (dir.sqrMagnitude < 0.25f)
+            {
+                try { dir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")); } catch { }
+            }
+
+            _navCooldown -= Time.unscaledDeltaTime;
+            if (_navCooldown > 0f || dir.sqrMagnitude < 0.25f) return;
+
+            if (Mathf.Abs(dir.y) >= Mathf.Abs(dir.x)) MoveFocus(dir.y > 0f ? -1 : 1);
+            else MoveFocus(dir.x > 0f ? 1 : -1);
+            _navCooldown = 0.22f;
+        }
+
+        private void MoveFocus(int delta)
+        {
+            if (_focusables.Count == 0) return;
+            int i = _focusIdx + delta;
+            if (i < 0) i += _focusables.Count;
+            if (i >= _focusables.Count) i -= _focusables.Count;
+            FocusButton(i);
+        }
+
+        private void FocusButton(int idx)
+        {
+            _focusIdx = idx;
+            for (int i = 0; i < _focusables.Count; i++)
+            {
+                var img = _focusables[i].targetGraphic as Image;
+                if (img == null) continue;
+                Color baseColor;
+                if (!_baseColors.TryGetValue(_focusables[i], out baseColor)) baseColor = Color.white;
+                img.color = i == idx ? GameStyle.Accent : baseColor;
+            }
+        }
+
+        private void SelectFocused()
+        {
+            if (_focusIdx < 0 || _focusIdx >= _focusables.Count) return;
+            _focusables[_focusIdx].onClick.Invoke();
         }
 
         private void Refresh()
@@ -192,14 +217,14 @@ namespace GK2ZombieHQ
             _countLabel.text = count < 0 ? "" : HudFormat.Count(ZombieText.Language, count, max);
 
             foreach (Transform child in _content) Destroy(child.gameObject);
-            _navItems.Clear();
+            _focusables.Clear();
+            _baseColors.Clear();
 
             var entries = ZombieRoster.Load();
             if (entries.Count == 0)
             {
                 var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 24, TextAlignmentOptions.Left);
                 empty.gameObject.AddComponent<LayoutElement>().preferredHeight = 40;
-                ReinitNav();
                 return;
             }
 
@@ -225,7 +250,7 @@ namespace GK2ZombieHQ
                 ort.pivot = new Vector2(1, 0.5f); ort.sizeDelta = new Vector2(200, 60);
                 ort.anchoredPosition = new Vector2(-24, 0);
                 openBtn.onClick.AddListener(() => { ZombieRoster.OpenWindow(entry); Close(); });
-                RegisterNav(openBtn);
+                RegisterButton(openBtn);
 
                 var camBtn = UiFactory.TextButton("Camera", row, ZombieText.Get("Camera"), 30);
                 var crt2 = camBtn.GetComponent<RectTransform>();
@@ -233,7 +258,7 @@ namespace GK2ZombieHQ
                 crt2.pivot = new Vector2(1, 0.5f); crt2.sizeDelta = new Vector2(200, 60);
                 crt2.anchoredPosition = new Vector2(-236, 0);
                 camBtn.onClick.AddListener(() => { ZombieRoster.FocusCamera(entry); Close(); });
-                RegisterNav(camBtn);
+                RegisterButton(camBtn);
 
                 if (e.Info.CanRecall)
                 {
@@ -243,22 +268,9 @@ namespace GK2ZombieHQ
                     rrt.pivot = new Vector2(1, 0.5f); rrt.sizeDelta = new Vector2(200, 60);
                     rrt.anchoredPosition = new Vector2(-448, 0);
                     rec.onClick.AddListener(() => { ZombieRoster.Recall(entry); Refresh(); });
-                    RegisterNav(rec);
+                    RegisterButton(rec);
                 }
             }
-
-            ReinitNav();
-        }
-
-        private void ReinitNav()
-        {
-            try
-            {
-                if (_nav == null) return;
-                _nav.ReinitItems(true, _navItems, null);
-                _nav.Enable(true);
-            }
-            catch (Exception ex) { Plugin.Log.LogWarning("nav: " + ex.Message); }
         }
     }
 }

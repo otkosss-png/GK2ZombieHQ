@@ -57,7 +57,7 @@ namespace GK2ZombieHQ
             Mod.HudMaxZombies = Config.Bind("Hud", "MaxZombies", 0, "Allowed zombies (0 = hide)");
             Mod.HudToggleKey = Config.Bind("Keys", "HudToggle", new KeyboardShortcut(KeyCode.Z), "Toggle HUD");
             Mod.PanelKey = Config.Bind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8), "Open the zombie panel");
-            Mod.PanelGamepad = Config.Bind("Keys", "PanelGamepad", "CheatButton", "Gamepad GameKey to toggle the panel (empty = off)");
+            Mod.PanelGamepad = Config.Bind("Keys", "PanelGamepad", 6, "Gamepad joystick button index to toggle the panel (-1 = off)");
         }
 
         internal static ZombieLanguage ResolveLanguage(string value)
