@@ -41,6 +41,17 @@ namespace GK2ZombieHQ
             return t;
         }
 
+        // Применяет игровой спрайт кнопки к уже созданной кнопке (для Close/Center).
+        internal static void ApplyButtonSprite(Button btn)
+        {
+            var img = btn != null ? btn.targetGraphic as Image : null;
+            var sprite = GameStyle.ButtonSprite;
+            if (img == null || sprite == null) return;
+            img.sprite = sprite;
+            img.type = sprite.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+            img.color = Color.white;
+        }
+
         internal static Button TextButton(string name, Transform parent, string text, int size)
         {
             var rt = Rect(name, parent);

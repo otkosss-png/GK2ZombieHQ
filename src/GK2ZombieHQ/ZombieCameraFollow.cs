@@ -14,6 +14,7 @@ namespace GK2ZombieHQ
 
         private GameObject _root;
         private TextMeshProUGUI _label;
+        private Button _centerButton;
         private WgoData _zombie;
         private Transform _savedTarget;
 
@@ -37,6 +38,7 @@ namespace GK2ZombieHQ
 
                 _zombie = zombie;
                 if (_label != null) _label.text = ZombieText.Get("CameraFollow") + ": " + displayName;
+                UiFactory.ApplyButtonSprite(_centerButton);
                 if (_root != null) _root.SetActive(true);
             }
             catch (Exception ex) { Plugin.Log.LogWarning("camera follow: " + ex); }
@@ -119,6 +121,7 @@ namespace GK2ZombieHQ
             crt.pivot = new Vector2(1, 0.5f); crt.sizeDelta = new Vector2(160, 48);
             crt.anchoredPosition = new Vector2(-14, 0);
             center.onClick.AddListener(Center);
+            _centerButton = center;
         }
     }
 }

@@ -14,6 +14,10 @@ namespace GK2ZombieHQ
         private static Sprite _buttonSprite;
         private static Sprite _panelSprite;
         private static Sprite _zombieIcon;
+        private static Sprite _whiteSkull, _redSkull;
+
+        internal static Sprite WhiteSkull { get { Ensure(); return _whiteSkull; } }
+        internal static Sprite RedSkull { get { Ensure(); return _redSkull; } }
 
         internal static readonly Color Text = new Color(0.93f, 0.85f, 0.66f, 1f);
         internal static readonly Color Accent = new Color(1f, 0.66f, 0.33f, 1f);
@@ -49,6 +53,15 @@ namespace GK2ZombieHQ
                 }
                 if (_buttonSprite != null) Plugin.Log.LogInfo("style: button sprite = " + _buttonSprite.name);
                 else Plugin.Log.LogInfo("style: button sprite = (none, using solid)");
+
+                var col = LazySingletonSO<EasySpritesCollection>.Instance;
+                if (col != null)
+                {
+                    _whiteSkull = col.GetSprite("skull") ?? col.GetSprite("skull-zombie_window");
+                    _redSkull = col.GetSprite("rskull") ?? col.GetSprite("rskull-zombie_window");
+                    Plugin.Log.LogInfo("style: skulls white=" + (_whiteSkull != null ? _whiteSkull.name : "none")
+                        + " red=" + (_redSkull != null ? _redSkull.name : "none"));
+                }
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("style scan: " + ex.Message); }
         }
