@@ -33,8 +33,20 @@ namespace GK2ZombieHQ
 
         internal void Close()
         {
-            if (_root == null) return;
+            if (_root == null || !_root.activeSelf) return;
             _root.SetActive(false);
+            SetPaused(false);
+        }
+
+        // Пауза игры, пока открыта панель (иначе персонаж ходит по стрелкам).
+        private static void SetPaused(bool paused)
+        {
+            try
+            {
+                if (paused) MainGame.PauseGame();
+                else MainGame.UnpauseGame();
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("pause: " + ex.Message); }
         }
 
         // Геймпад: открыть панель по индексу кнопки (Keys.PanelGamepad).
@@ -151,6 +163,7 @@ namespace GK2ZombieHQ
                 if (itemMax > vpH) scroll += itemMax - vpH;
                 else if (itemMin < 0f) scroll += itemMin;
                 scroll = Mathf.Clamp(scroll, 0f, maxScroll);
+                Plugin.Log.LogInfo($"scroll: vpH={vpH:0} contentH={contentH:0} max={maxScroll:0} itemMin={itemMin:0} itemMax={itemMax:0} scroll={scroll:0}");
                 // ScrollRect сам выставляет позицию контента по нормализованному значению.
                 _scroll.verticalNormalizedPosition = 1f - scroll / maxScroll;
             }
@@ -204,7 +217,8 @@ namespace GK2ZombieHQ
             if (_root == null) return;
             bool show = !_root.activeSelf;
             _root.SetActive(show);
-            if (show) Refresh();
+            if (show) { Refresh(); SetPaused(true); }
+            else SetPaused(false);
         }
 
         private void Update()
