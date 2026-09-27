@@ -10,6 +10,7 @@ namespace GK2ZombieHQ.Core
         public string Collar;
         public string Activity;
         public string Zone;
+        public ZombieState State;
         public bool CanRecall;
     }
 }

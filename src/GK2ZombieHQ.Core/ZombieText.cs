@@ -20,6 +20,10 @@ namespace GK2ZombieHQ.Core
             ["Close"] = ("Close", "Закрыть"),
             ["NoZombies"] = ("No zombies", "Зомби нет"),
             ["Free"] = ("free", "свободен"),
+            ["Lying"] = ("on the floor", "лежит на полу"),
+            ["NoStation"] = ("no station", "без станции"),
+            ["InHands"] = ("in hands", "в руках"),
+            ["OffWorld"] = ("no body in the world", "нет тела в мире"),
             ["Error"] = ("Error", "Ошибка"),
         };
 
@@ -49,6 +53,20 @@ namespace GK2ZombieHQ.Core
         {
             if (!Kinds.TryGetValue(kind, out var v)) v = Kinds[ZombieKind.Unknown];
             return Language == ZombieLanguage.Ru ? v.Ru : v.En;
+        }
+
+        // Подпись состояния строки: "лежит на полу" / "без станции" / "в руках" / "нет тела в мире"
+        // (у работающих подписи нет).
+        public static string StatusName(ZombieState state)
+        {
+            switch (state)
+            {
+                case ZombieState.Lying: return Get("Lying");
+                case ZombieState.Free: return Get("NoStation");
+                case ZombieState.InHands: return Get("InHands");
+                case ZombieState.OffWorld: return Get("OffWorld");
+                default: return null;
+            }
         }
     }
 }

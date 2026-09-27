@@ -20,5 +20,14 @@ namespace GK2ZombieHQ.Core
         }
 
         public static bool OverLimit(int count, int limit) => limit > 0 && count > limit;
+
+        // Заголовок панели: "Зомби: N", а если в сейве зомби больше, чем видно в мире,
+        // показываем общее число — так видно "потерявшихся" (упавших/пропавших) зомби.
+        public static string Header(ZombieLanguage lang, int count, int total)
+        {
+            var text = Count(lang, count, 0);
+            if (total <= count || total <= 0) return text;
+            return text + (lang == ZombieLanguage.Ru ? " · всего " : " · total ") + total;
+        }
     }
 }

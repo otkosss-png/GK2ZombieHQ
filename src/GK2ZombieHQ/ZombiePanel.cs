@@ -367,8 +367,9 @@ namespace GK2ZombieHQ
             _baseColors.Clear();
             _frames.Clear();
 
+            ZombieRoster.RefreshBodies(true);
             var entries = ZombieRoster.Load();
-            _countLabel.text = HudFormat.Count(ZombieText.Language, entries.Count, 0);
+            _countLabel.text = HudFormat.Header(ZombieText.Language, entries.Count, ZombieRoster.Total());
             if (entries.Count == 0)
             {
                 var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 24, TextAlignmentOptions.Left);
@@ -387,7 +388,20 @@ namespace GK2ZombieHQ
                 name.overflowMode = TextOverflowModes.Ellipsis;
                 var nrt = name.rectTransform;
                 nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
-                nrt.offsetMin = new Vector2(16, 6); nrt.offsetMax = new Vector2(-1220, -6);
+                nrt.offsetMin = new Vector2(16, 26); nrt.offsetMax = new Vector2(-1220, -6);
+
+                // Состояние ("лежит на полу" / "без станции") — второй строкой под именем.
+                var statusText = ZombieText.StatusName(e.Info.State);
+                if (!string.IsNullOrEmpty(statusText))
+                {
+                    var status = UiFactory.Label("Status", row, statusText, 24, TextAlignmentOptions.Left, GameStyle.Accent);
+                    status.textWrappingMode = TextWrappingModes.NoWrap;
+                    status.overflowMode = TextOverflowModes.Ellipsis;
+                    var srt = status.rectTransform;
+                    srt.anchorMin = new Vector2(0, 0); srt.anchorMax = new Vector2(1, 0);
+                    srt.pivot = new Vector2(0.5f, 0);
+                    srt.offsetMin = new Vector2(16, 4); srt.offsetMax = new Vector2(-1220, 26);
+                }
 
                 if (!string.IsNullOrEmpty(e.Info.Collar))
                 {

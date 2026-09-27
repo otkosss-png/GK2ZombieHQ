@@ -11,13 +11,14 @@ namespace GK2ZombieHQ
             "otkosss.gk2.zombiehq",
             "GK2 Zombie HQ",
             "otkosss",
-            "1.2.1",
-            "Zombie count HUD and a manager panel: list every zombie, open the game's zombie window, recall from work.",
+            "1.3.4",
+            "Zombie count HUD and a manager panel: list every zombie (including ones lying on the floor), show the total in the save, open the game's zombie window, recall from work, and guard against the game's caretaker-zombie crash.",
             false,
             false);
 
         internal ConfigEntry<string> Language;
         internal ConfigEntry<bool> HudEnabled;
+        internal ConfigEntry<bool> CaretakerGuard;
         internal ConfigEntry<int> HudFontSize, HudOffsetX, HudOffsetY;
         internal ConfigEntry<KeyboardShortcut> HudToggleKey, PanelKey;
         internal ConfigEntry<int> PanelGamepad;
@@ -43,6 +44,8 @@ namespace GK2ZombieHQ
                 "Клавиша панели", "Открыть «Зомби-штаб»", 20);
             PanelGamepad = s.AddIntSlider("Keys", "PanelGamepad", 6, -1, 19,
                 "Gamepad: open panel (button #)", "Joystick button index (0=A,1=B,2=X,3=Y,6=Back,7=Start); -1 = off", 1, 30);
+            CaretakerGuard = s.AddToggle("Fix", "CaretakerGuard", true,
+                "Защита от ошибок смотрителя", "Глушить игровой NRE у смотрителя с пропавшей целью (иначе игра падает каждый кадр)", 10);
         }
     }
 }
