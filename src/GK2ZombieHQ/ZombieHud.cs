@@ -20,6 +20,12 @@ namespace GK2ZombieHQ
         private const float TextLeftGlyph = 10f;
         private const float TextLeftImage = 48f;
 
+        // Порядок слоя: ниже игрового затемнения переходов/загрузки (UIFade / UIFadeWithText = 800,
+        // BLACKOUT_DEFAULT_SORTING_ORDER_VALUE), но выше обычного игрового UI — окон (LazyWindow, 400+),
+        // тултипов (700) и курсора геймпада (701). Так чёрный экран перехода/загрузки накрывает наш
+        // оверлей ровно как игровой HUD, а в игре он остаётся поверх окон.
+        private const int CanvasSortingOrder = 760;
+
         // Иконка зомби в HUD: если у игры есть глиф для зоны воскрешения (WorldZoneDef.qualityIcon),
         // рисуем его прямо в тексте (как игра в заголовке зала), иначе — обычный спрайт-Image.
         private string _glyphName;
@@ -40,7 +46,7 @@ namespace GK2ZombieHQ
             _canvasGo.transform.SetParent(transform, false);
             var canvas = _canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 5000;
+            canvas.sortingOrder = CanvasSortingOrder;
             var scaler = _canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
