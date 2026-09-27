@@ -27,6 +27,11 @@ namespace GK2ZombieHQ.Core
             ["InChoir"] = ("in the church choir", "в хоре"),
             ["OffWorld"] = ("no body in the world", "нет тела в мире"),
             ["Error"] = ("Error", "Ошибка"),
+            ["Collar"] = ("Collar", "Ошейник"),
+            ["Tool"] = ("Tool", "Инструмент"),
+            ["Armor"] = ("Armor", "Броня"),
+            ["Empty"] = ("empty", "пусто"),
+            ["Carried"] = ("Carried", "Переносимое"),
         };
 
         private static readonly Dictionary<ZombieKind, (string En, string Ru)> Kinds =
@@ -71,6 +76,29 @@ namespace GK2ZombieHQ.Core
                 case ZombieState.OffWorld: return Get("OffWorld");
                 default: return null;
             }
+        }
+
+        // Название слота снаряжения ("Ошейник" / "Инструмент" / "Броня").
+        public static string SlotName(GearSlot slot)
+        {
+            switch (slot)
+            {
+                case GearSlot.Collar: return Get("Collar");
+                case GearSlot.Tool: return Get("Tool");
+                case GearSlot.Armor: return Get("Armor");
+                default: return Get("Carried");
+            }
+        }
+
+        // Подсказка значка: "Ошейник: Кожаный ошейник", "Переносимое: Шприц x3".
+        public static string GearTip(GearIcon icon)
+        {
+            if (icon == null) return string.Empty;
+            string slot = SlotName(icon.Slot);
+            if (icon.IsEmpty) return slot + ": " + Get("Empty");
+            string name = string.IsNullOrEmpty(icon.Name) ? icon.Id : icon.Name;
+            string count = icon.Count > 1 ? " x" + icon.Count : string.Empty;
+            return slot + ": " + name + count;
         }
     }
 }

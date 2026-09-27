@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace GK2ZombieHQ.Core
 {
     public sealed class ZombieInfo
@@ -15,5 +17,7 @@ namespace GK2ZombieHQ.Core
         public string Zone;
         public ZombieState State;
         public bool CanRecall;
+        // Строка снаряжения: 3 слота (ошейник/инструмент/броня, пустые — заглушки) + переносимое.
+        public List<GearIcon> Gear = new List<GearIcon>();
     }
 }

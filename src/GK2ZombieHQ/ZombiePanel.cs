@@ -123,10 +123,19 @@ namespace GK2ZombieHQ
             cnt.pivot = new Vector2(0.5f, 1); cnt.anchoredPosition = new Vector2(24, -92);
             cnt.sizeDelta = new Vector2(-48, 50);
 
+            // Подсказка снаряжения: наведение на значок пишет текст сюда (см. GearTipHover).
+            _gearTip = UiFactory.Label("GearTip", prt, "", 26, TextAlignmentOptions.Left, GameStyle.Accent);
+            var grt = _gearTip.rectTransform;
+            grt.anchorMin = new Vector2(0, 1); grt.anchorMax = new Vector2(1, 1);
+            grt.pivot = new Vector2(0.5f, 1); grt.anchoredPosition = new Vector2(24, -136);
+            grt.sizeDelta = new Vector2(-48, 30);
+            _gearTip.textWrappingMode = TextWrappingModes.NoWrap;
+            _gearTip.overflowMode = TextOverflowModes.Ellipsis;
+
             var viewport = UiFactory.PanelImage("Viewport", prt, new Color(0, 0, 0, 0.18f));
             var vrt = viewport.rectTransform;
             vrt.anchorMin = new Vector2(0, 0); vrt.anchorMax = new Vector2(1, 1);
-            vrt.offsetMin = new Vector2(20, 20); vrt.offsetMax = new Vector2(-20, -158);
+            vrt.offsetMin = new Vector2(20, 20); vrt.offsetMax = new Vector2(-20, -180);
             viewport.gameObject.AddComponent<RectMask2D>();
             var scroll = viewport.gameObject.AddComponent<ScrollRect>();
 
@@ -345,6 +354,81 @@ namespace GK2ZombieHQ
             lrt.sizeDelta = new Vector2(105, 44); lrt.anchoredPosition = Vector2.zero;
         }
 
+        // Строка снаряжения: значки ошейника/инструмента/брони (пустые — тусклая заглушка) и
+        // переносимых вещей. Наведение на значок показывает название в подсказке панели.
+        private const float GearIconSize = 30f;
+        private const float GearIconStep = 34f;
+        private const float GearStripRight = -660f;
+
+        private void MakeGearStrip(RectTransform row, ZombieInfo info)
+        {
+            if (info == null || info.Gear == null || info.Gear.Count == 0) return;
+
+            var strip = UiFactory.Rect("Gear", row);
+            strip.anchorMin = new Vector2(1, 1); strip.anchorMax = new Vector2(1, 1);
+            strip.pivot = new Vector2(1, 1); strip.sizeDelta = new Vector2(0, GearIconSize);
+            strip.anchoredPosition = new Vector2(GearStripRight, -4);
+
+            for (int i = 0; i < info.Gear.Count; i++)
+            {
+                var icon = info.Gear[i];
+                var go = UiFactory.Rect("Slot" + i, strip);
+                go.anchorMin = new Vector2(1, 1); go.anchorMax = new Vector2(1, 1);
+                go.pivot = new Vector2(1, 1);
+                go.sizeDelta = new Vector2(GearIconSize, GearIconSize);
+                go.anchoredPosition = new Vector2(-i * GearIconStep, 0);
+
+                var sprite = icon.IsEmpty ? null : GameStyle.ItemSprite(icon.Id, icon.IconId);
+                var img = go.gameObject.AddComponent<Image>();
+                img.sprite = sprite;
+                img.raycastTarget = true;
+                img.color = icon.IsEmpty
+                    ? new Color(1f, 1f, 1f, 0.16f)          // пустой слот — тускло
+                    : Color.white;
+                if (sprite == null && !icon.IsEmpty) img.color = GameStyle.Accent;
+
+                if (icon.Count > 1)
+                {
+                    var count = UiFactory.Label("Count", go, "x" + icon.Count, 18, TextAlignmentOptions.Right, GameStyle.Text);
+                    var crt = count.rectTransform;
+                    crt.anchorMin = new Vector2(1, 0); crt.anchorMax = new Vector2(1, 0);
+                    crt.pivot = new Vector2(1, 0);
+                    crt.sizeDelta = new Vector2(GearIconSize, 18);
+                    crt.anchoredPosition = new Vector2(2, -2);
+                    count.raycastTarget = false;
+                }
+
+                var hover = go.gameObject.AddComponent<GearTipHover>();
+                hover.Tip = ZombieText.GearTip(icon);
+                hover.Owner = this;
+            }
+        }
+
+        // Подсказка по наведению: пишем текст в строку-подсказку панели.
+        private TextMeshProUGUI _gearTip;
+
+        private void ShowGearTip(string text)
+        {
+            if (_gearTip == null) return;
+            _gearTip.text = text ?? string.Empty;
+        }
+
+        internal sealed class GearTipHover : MonoBehaviour, UnityEngine.EventSystems.IPointerEnterHandler, UnityEngine.EventSystems.IPointerExitHandler
+        {
+            internal string Tip;
+            internal ZombiePanel Owner;
+
+            public void OnPointerEnter(UnityEngine.EventSystems.PointerEventData eventData)
+            {
+                if (Owner != null) Owner.ShowGearTip(Tip);
+            }
+
+            public void OnPointerExit(UnityEngine.EventSystems.PointerEventData eventData)
+            {
+                if (Owner != null) Owner.ShowGearTip(null);
+            }
+        }
+
         private void FocusButton(int idx)
         {
             _focusIdx = idx;
@@ -396,14 +480,17 @@ namespace GK2ZombieHQ
             foreach (var e in entries)
             {
                 var row = UiFactory.Rect("Row", _content);
-                row.gameObject.AddComponent<LayoutElement>().preferredHeight = 74;
+                row.gameObject.AddComponent<LayoutElement>().preferredHeight = 108;
 
                 var name = UiFactory.Label("Name", row, e.Info.Name + "  ·  " + ZombieText.KindName(e.Info.Kind), 32, TextAlignmentOptions.Left);
                 name.textWrappingMode = TextWrappingModes.NoWrap;
                 name.overflowMode = TextOverflowModes.Ellipsis;
                 var nrt = name.rectTransform;
                 nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
-                nrt.offsetMin = new Vector2(16, 26); nrt.offsetMax = new Vector2(-1220, -6);
+                nrt.offsetMin = new Vector2(16, 44); nrt.offsetMax = new Vector2(-1220, -6);
+
+                // Снаряжение: значки над ошейником (ошейник/инструмент/броня + переносимое).
+                MakeGearStrip(row, e.Info);
 
                 // Состояние ("лежит на полу" / "без станции") — второй строкой под именем.
                 var statusText = ZombieText.StatusName(e.Info.State);

@@ -331,6 +331,7 @@ namespace GK2ZombieHQ
                             TechGreen = z.techGreen,
                             TechRed = z.techRed,
                             Collar = SafeItemHeader(z.Collar),
+                            Gear = BuildGear(z),
                             Activity = z.WorkerActivity != null ? z.WorkerActivity.ToString() : null,
                             State = state,
                             // "Отозвать" (в переноску) осмысленно только для тех, у кого есть тело в мире
@@ -404,6 +405,66 @@ namespace GK2ZombieHQ
         {
             try { return item != null && item.Definition != null ? item.Definition.GetHeader() : null; }
             catch { return null; }
+        }
+
+        // Строка снаряжения зомби: ошейник/инструмент/броня + переносимые вещи (инъекции и т.п.).
+        private const int MaxCarriedIcons = 8;
+
+        private static List<GearIcon> BuildGear(ZombieWgoData z)
+        {
+            try
+            {
+                var gear = new List<GearIcon>
+                {
+                    GearItem(GearSlot.Collar, z.Collar),
+                    GearItem(GearSlot.Tool, z.Hand),
+                    GearItem(GearSlot.Armor, z.Armor),
+                };
+
+                // Переносимое — только у носильщика (см. GearLogic.ShowCarried).
+                var carried = new List<GearIcon>();
+                if (GearLogic.ShowCarried(MapKind(z.ZombieType)))
+                {
+                    var inv = z.WorkerInventory;
+                    var data = inv != null ? inv.Data : null;
+                    var items = data != null ? data.Inventory : null;
+                    if (items != null)
+                    {
+                        foreach (var it in items)
+                        {
+                            if (it == null || it.IsEmpty) continue;
+                            var def = it.Definition;
+                            carried.Add(new GearIcon
+                            {
+                                Id = def != null ? def.id : null,
+                                IconId = def != null ? def.iconId : null,
+                                Name = SafeItemHeader(it),
+                                Count = it.Count < 1 ? 1 : it.Count,
+                            });
+                        }
+                    }
+                }
+
+                return GearLogic.Build(gear, carried, MaxCarriedIcons);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogWarning("gear: " + ex.Message);
+                return GearLogic.Build(null, null, 0);
+            }
+        }
+
+        private static GearIcon GearItem(GearSlot slot, Item item)
+        {
+            if (item == null || item.IsEmpty) return null;
+            var def = item.Definition;
+            return new GearIcon
+            {
+                Slot = slot,
+                Id = def != null ? def.id : null,
+                IconId = def != null ? def.iconId : null,
+                Name = SafeItemHeader(item),
+            };
         }
 
         private static ZombieKind MapKind(ZombieType t)

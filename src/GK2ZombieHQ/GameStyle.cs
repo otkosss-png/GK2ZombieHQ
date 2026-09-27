@@ -35,6 +35,25 @@ namespace GK2ZombieHQ
         internal static Sprite PanelSprite { get { Ensure(); return _panelSprite; } }
         internal static Sprite ZombieIcon { get { Ensure(); return _zombieIcon; } }
 
+        // Спрайт предмета из игрового справочника спрайтов. Игра берёт ItemDef.iconId
+        // (см. UIItemCell.Draw: GetSprite(def.iconId, null)); если пусто — пробуем id.
+        internal static Sprite ItemSprite(string id, string iconId)
+        {
+            try
+            {
+                var collection = EasySpritesCollection.Instance;
+                if (collection == null) return null;
+                if (!string.IsNullOrEmpty(iconId))
+                {
+                    var byIcon = collection.GetSprite(iconId, null);
+                    if (byIcon != null) return byIcon;
+                }
+                if (!string.IsNullOrEmpty(id)) return collection.GetSprite(id, null);
+                return null;
+            }
+            catch { return null; }
+        }
+
         // TMP-ассет, в котором есть нужный глиф (например иконка зомби из зоны воскрешения).
         // Сначала берём уже найденный ассет со "skull", иначе ищем по всем спрайт-ассетам.
         internal static TMP_SpriteAsset SpriteAssetFor(string glyphName)
