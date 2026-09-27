@@ -23,6 +23,8 @@ namespace GK2ZombieHQ.Core
             ["Lying"] = ("on the floor", "лежит на полу"),
             ["NoStation"] = ("no station", "без станции"),
             ["InHands"] = ("in hands", "в руках"),
+            ["OnTable"] = ("on a pallet/table", "на паллете/столе"),
+            ["InChoir"] = ("in the church choir", "в хоре"),
             ["OffWorld"] = ("no body in the world", "нет тела в мире"),
             ["Error"] = ("Error", "Ошибка"),
         };
@@ -64,6 +66,8 @@ namespace GK2ZombieHQ.Core
                 case ZombieState.Lying: return Get("Lying");
                 case ZombieState.Free: return Get("NoStation");
                 case ZombieState.InHands: return Get("InHands");
+                case ZombieState.OnTable: return Get("OnTable");
+                case ZombieState.InChoir: return Get("InChoir");
                 case ZombieState.OffWorld: return Get("OffWorld");
                 default: return null;
             }

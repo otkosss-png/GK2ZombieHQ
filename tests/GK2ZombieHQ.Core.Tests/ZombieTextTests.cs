@@ -31,11 +31,15 @@ namespace GK2ZombieHQ.Core.Tests
             Assert.Equal("on the floor", ZombieText.StatusName(ZombieState.Lying));
             Assert.Equal("no station", ZombieText.StatusName(ZombieState.Free));
             Assert.Equal("in hands", ZombieText.StatusName(ZombieState.InHands));
+            Assert.Equal("on a pallet/table", ZombieText.StatusName(ZombieState.OnTable));
+            Assert.Equal("in the church choir", ZombieText.StatusName(ZombieState.InChoir));
             Assert.Equal("no body in the world", ZombieText.StatusName(ZombieState.OffWorld));
             ZombieText.Language = ZombieLanguage.Ru;
             Assert.Equal("лежит на полу", ZombieText.StatusName(ZombieState.Lying));
             Assert.Equal("без станции", ZombieText.StatusName(ZombieState.Free));
             Assert.Equal("в руках", ZombieText.StatusName(ZombieState.InHands));
+            Assert.Equal("на паллете/столе", ZombieText.StatusName(ZombieState.OnTable));
+            Assert.Equal("в хоре", ZombieText.StatusName(ZombieState.InChoir));
             Assert.Equal("нет тела в мире", ZombieText.StatusName(ZombieState.OffWorld));
             ZombieText.Language = ZombieLanguage.En;
         }

@@ -11,13 +11,14 @@ namespace GK2ZombieHQ
             "otkosss.gk2.zombiehq",
             "GK2 Zombie HQ",
             "otkosss",
-            "1.3.4",
+            "1.4.2",
             "Zombie count HUD and a manager panel: list every zombie (including ones lying on the floor), show the total in the save, open the game's zombie window, recall from work, and guard against the game's caretaker-zombie crash.",
             false,
             false);
 
         internal ConfigEntry<string> Language;
         internal ConfigEntry<bool> HudEnabled;
+        internal ConfigEntry<bool> HudBackground;
         internal ConfigEntry<bool> CaretakerGuard;
         internal ConfigEntry<int> HudFontSize, HudOffsetX, HudOffsetY;
         internal ConfigEntry<KeyboardShortcut> HudToggleKey, PanelKey;
@@ -32,11 +33,13 @@ namespace GK2ZombieHQ
                 "Language / Язык", "en, ru, auto (system)", 10);
             HudEnabled = s.AddToggle("Hud", "Enabled", true,
                 "HUD: счётчик зомби", "Показывать счётчик зомби на экране", 10);
-            HudFontSize = s.AddIntSlider("Hud", "FontSize", 60, 12, 160,
+            HudBackground = s.AddToggle("Hud", "Background", false,
+                "Фон HUD", "Плашка под иконкой и числом (выкл — только иконка и число)", 11);
+            HudFontSize = s.AddIntSlider("Hud", "FontSize", 30, 12, 160,
                 "Размер шрифта HUD", "", 2, 20);
-            HudOffsetX = s.AddIntSlider("Hud", "OffsetX", 12, 0, 1900,
+            HudOffsetX = s.AddIntSlider("Hud", "OffsetX", 274, 0, 1900,
                 "Отступ HUD по X", "", 2, 30);
-            HudOffsetY = s.AddIntSlider("Hud", "OffsetY", 1000, 0, 1080,
+            HudOffsetY = s.AddIntSlider("Hud", "OffsetY", 113, 0, 1080,
                 "Отступ HUD по Y", "", 2, 40);
             HudToggleKey = s.AddKeybind("Keys", "HudToggle", new KeyboardShortcut(KeyCode.Z),
                 "Клавиша HUD", "Скрыть/показать счётчик", 10);

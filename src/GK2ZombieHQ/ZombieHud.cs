@@ -13,6 +13,21 @@ namespace GK2ZombieHQ
         private float _timer;
         private bool _visible = true;
 
+        // Размер плашки и иконки подобран под игровой виджет «лайков» (👍 6/20) в левом верхнем углу.
+        private const float PlateW = 168f;
+        private const float PlateH = 42f;
+        private const float IconSize = 32f;
+        private const float TextLeftGlyph = 10f;
+        private const float TextLeftImage = 48f;
+
+        // Иконка зомби в HUD: если у игры есть глиф для зоны воскрешения (WorldZoneDef.qualityIcon),
+        // рисуем его прямо в тексте (как игра в заголовке зала), иначе — обычный спрайт-Image.
+        private string _glyphName;
+        private TMP_SpriteAsset _glyphAsset;
+        private GameObject _iconGo;
+        private float _glyphRetry;
+        private bool _glyphApplied;
+
         private void Start()
         {
             try { BuildUi(); }
@@ -35,24 +50,29 @@ namespace GK2ZombieHQ
             var bg = new GameObject("Bg", typeof(RectTransform), typeof(Image));
             bg.transform.SetParent(_canvasGo.transform, false);
             var bgImage = bg.GetComponent<Image>();
-            bgImage.color = new Color(0f, 0f, 0f, 0.5f);
+            // Плашка под иконкой/числом. Фон можно отключить (по умолчанию выключен), но прозрачный
+            // Image остаётся — он ловит перетаскивание и клик по HUD.
+            bgImage.color = Plugin.Mod.HudBackground != null && Plugin.Mod.HudBackground.Value
+                ? new Color(0f, 0f, 0f, 0.5f)
+                : new Color(0f, 0f, 0f, 0f);
             bgImage.raycastTarget = true;
             var brt = (RectTransform)bg.transform;
             brt.anchorMin = new Vector2(0, 1);
             brt.anchorMax = new Vector2(0, 1);
             brt.pivot = new Vector2(0, 1);
             brt.anchoredPosition = new Vector2(Plugin.Mod.HudOffsetX.Value, -Plugin.Mod.HudOffsetY.Value);
-            brt.sizeDelta = new Vector2(300, 64);
+            brt.sizeDelta = new Vector2(PlateW, PlateH);
 
             var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
             iconGo.transform.SetParent(bg.transform, false);
+            _iconGo = iconGo;
             _icon = iconGo.GetComponent<Image>();
             var irt = (RectTransform)iconGo.transform;
             irt.anchorMin = new Vector2(0, 0.5f);
             irt.anchorMax = new Vector2(0, 0.5f);
             irt.pivot = new Vector2(0, 0.5f);
-            irt.anchoredPosition = new Vector2(10, 0);
-            irt.sizeDelta = new Vector2(52, 52);
+            irt.anchoredPosition = new Vector2(8, 0);
+            irt.sizeDelta = new Vector2(IconSize, IconSize);
             var iconSprite = GameStyle.ZombieIcon;
             if (iconSprite != null)
             {
@@ -79,8 +99,8 @@ namespace GK2ZombieHQ
             var rt = _text.rectTransform;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(iconSprite != null ? 70 : 14, 8);
-            rt.offsetMax = new Vector2(-14, -8);
+            rt.offsetMin = new Vector2(iconSprite != null ? TextLeftImage : TextLeftGlyph, 6);
+            rt.offsetMax = new Vector2(-8, -6);
 
             var drag = bg.AddComponent<HudDragHandler>();
             drag.CanvasRect = (RectTransform)_canvasGo.transform;
@@ -107,17 +127,55 @@ namespace GK2ZombieHQ
                 _timer = 0.5f;
 
                 int count = ZombieRoster.CountInWorld();
+                int limit = ZombieRoster.Limit();
 
-                bool gameActive = count >= 0 && ZombieRoster.GameReady();
+                bool gameActive = count >= 0 && ZombieRoster.GameReady() && ZombieRoster.GameHudVisible();
                 bool show = gameActive && _visible;
                 if (_canvasGo.activeSelf != show) _canvasGo.SetActive(show);
                 if (!show || _text == null) return;
 
-                // Игра не отдаёт числовой лимит (порог дебафа молитвы) через API,
-                // поэтому показываем только текущее количество зомби.
-                _text.text = HudFormat.CountShort(count, 0);
+                EnsureGlyph();
+                string body = HudFormat.CountShort(count, limit);
+                if (_glyphAsset != null && !string.IsNullOrEmpty(_glyphName))
+                {
+                    _text.spriteAsset = _glyphAsset;
+                    _text.text = "<sprite name=\"" + _glyphName + "\"> " + body;
+                    ApplyIconMode(false);
+                }
+                else
+                {
+                    _text.text = body;
+                    ApplyIconMode(true);
+                }
+
+                // Лимит даёт игра (качество зоны воскрешения): "N / M", красным при превышении.
+                _text.color = HudFormat.OverLimit(count, limit) ? GameStyle.Danger : GameStyle.Text;
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("hud: " + ex.Message); }
+        }
+
+        // Иконку ищем лениво (зона доступна только с загруженным сейвом) и кэшируем;
+        // если глиф не нашёлся, раз в 30 секунд пробуем ещё раз.
+        private void EnsureGlyph()
+        {
+            if (_glyphApplied) return;
+            if (Time.realtimeSinceStartup < _glyphRetry) return;
+            _glyphRetry = Time.realtimeSinceStartup + 30f;
+            var name = ZombieRoster.QualityIcon();
+            if (string.IsNullOrEmpty(name)) return;
+            _glyphName = name;
+            _glyphAsset = GameStyle.SpriteAssetFor(name);
+            _glyphApplied = _glyphAsset != null;
+            Plugin.Log.LogInfo("hud: zombie glyph = " + name + (_glyphApplied ? " (ok)" : " (нет в спрайт-ассетах)"));
+        }
+
+        // Иконка-Image и глиф в тексте взаимоисключающие (иначе значок будет дважды).
+        private void ApplyIconMode(bool imageIcon)
+        {
+            if (_iconGo != null && _iconGo.activeSelf != imageIcon) _iconGo.SetActive(imageIcon);
+            var rt = _text.rectTransform;
+            float left = imageIcon ? TextLeftImage : TextLeftGlyph;
+            if (!Mathf.Approximately(rt.offsetMin.x, left)) rt.offsetMin = new Vector2(left, rt.offsetMin.y);
         }
     }
 }

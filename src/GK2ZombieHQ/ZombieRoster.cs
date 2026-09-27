@@ -23,12 +23,39 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("zombie count: " + ex.Message); return -1; }
         }
 
-        // Сейв загружен? В главном меню PlayerData == null — тогда мод молчит
-        // (иначе HUD/панель активны в меню, а клик дёргает игру без сейва и роняет апдейт).
+        // Сейв загружен и игра идёт? В главном меню PlayerData может остаться от прошлой сессии,
+        // поэтому дополнительно проверяем состояние игры (MainMenu / InGame) — иначе HUD и панель
+        // висят в меню.
         internal static bool GameReady()
         {
-            try { return MainGame.PlayerData != null; }
+            try
+            {
+                if (MainGame.PlayerData == null) return false;
+                var mg = MainGame.Instance;
+                return mg != null && mg.gameState == MainGame.GameState.InGame;
+            }
             catch { return false; }
+        }
+
+        // Игровой HUD скрыт? Игра прячет свой HUD (катсцены, загрузка/переходы, режим стройки,
+        // главное меню) через HUD.SetDisableState(...) -> LazyWidgetBase.Hide() -> SetActive(false).
+        // Наш оверлей отдельный, поэтому в этих фазах он оставался висеть. Зеркалим состояние
+        // игрового HUD. Если HUD ещё не создан — не прячем (fail-safe, прежнее поведение).
+        private static global::HUD _gameHud;
+
+        internal static bool GameHudVisible()
+        {
+            try
+            {
+                if (_gameHud == null)
+                {
+                    var all = UnityEngine.Resources.FindObjectsOfTypeAll<global::HUD>();
+                    if (all != null && all.Length > 0) _gameHud = all[0];
+                }
+                if (_gameHud == null) return true;
+                return _gameHud.gameObject.activeInHierarchy;
+            }
+            catch { return true; }
         }
 
         // Число зомби, чьё тело реально в мире (работает, свободен или лежит на полу).
@@ -48,6 +75,37 @@ namespace GK2ZombieHQ
             }
             catch { }
             return Count();
+        }
+
+        // Имя спрайта-иконки зомби из определения зоны воскрешения (WorldZoneDef.qualityIcon) —
+        // тот самый значок, который игра рисует в заголовке зала воскрешения ("16/20").
+        internal static string QualityIcon()
+        {
+            try
+            {
+                var world = MainGame.WorldData;
+                if (world == null) return null;
+                var zone = world.GetWorldZoneDataById("resurrection");
+                var def = zone != null ? zone.Definition : null;
+                var icon = def != null ? def.qualityIcon : null;
+                return string.IsNullOrEmpty(icon) ? null : icon;
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("quality icon: " + ex.Message); return null; }
+        }
+
+        // Лимит зомби от игры: качество зоны воскрешения — столько зомби можно держать,
+        // дальше игра вешает дебафф debuff_excessive_zombie. -1 = лимита нет/неизвестен.
+        internal static int Limit()
+        {
+            try
+            {
+                var world = MainGame.WorldData;
+                if (world == null) return -1;
+                var zone = world.GetWorldZoneDataById("resurrection");
+                if (zone == null) return -1;
+                return HudFormat.LimitOf(zone.GetTotalQuality());
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("zombie limit: " + ex.Message); return -1; }
         }
 
         // Сколько зомби вообще есть в сейве (включая лежащих и без тела) — для заголовка панели.
@@ -76,14 +134,90 @@ namespace GK2ZombieHQ
             catch { return false; }
         }
 
-        // Где зомби: на станции, свободный, лежит на полу, в руках или без тела в мире.
+        // Где зомби: на станции, свободный, лежит на полу, в руках, на паллете/столе, в хоре,
+        // либо данных нет без тела.
         internal static ZombieState StateOf(ZombieWgoData z)
         {
             if (z == null) return ZombieState.OffWorld;
             bool attached = false;
             try { attached = z.AttachedWgoData != null; } catch { }
-            bool bodyInWorld = IsDrop(z) && BodyInWorld(z);
-            return RosterLogic.Classify(InScene(z), bodyInWorld, HeldByPlayer(z), attached);
+            bool inScene = InScene(z);
+            bool held = HeldByPlayer(z);
+            bool bodyInWorld = !inScene && !held && IsDrop(z) && BodyInWorld(z);
+            var place = (!inScene && !held && !bodyInWorld) ? PlaceOf(z) : ZombiePlace.None;
+            return RosterLogic.Classify(inScene, bodyInWorld, held, place, attached);
+        }
+
+        // Столы/паллеты и места хора/органа, в чьём инвентаре лежит тело: игра хранит такие
+        // трупы как предмет внутри WGO, а не как зомби в мире.
+        private static readonly string[] TableContainers =
+        {
+            "resurrection_table_1", "resurrection_prepared", "pallet_corpse_1", "pallet_corpse_2", "autopsy_table_1"
+        };
+
+        private static readonly string[] ChoirContainers = { "zmb_choir_place", "zmb_organ_place" };
+
+        internal static ZombiePlace PlaceOf(ZombieWgoData z)
+        {
+            if (InContainers(z, TableContainers)) return ZombiePlace.Table;
+            if (InContainers(z, ChoirContainers)) return ZombiePlace.Choir;
+            return ZombiePlace.None;
+        }
+
+        private static bool InContainers(ZombieWgoData z, string[] ids)
+        {
+            try
+            {
+                var item = z != null ? z.ZombieItem : null;
+                if (item == null) return false;
+                var world = MainGame.WorldData;
+                if (world == null) return false;
+                foreach (var id in ids)
+                {
+                    var list = world.GetWgoDataList(id);
+                    if (list == null) continue;
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        var wgo = list[i];
+                        if (wgo == null) continue;
+                        if (InventoryHas(wgo.Inventory, item)) return true;
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        // Тело лежит либо во внешнем инвентаре стола (Inventory.Data.Inventory),
+        // либо прямо в инвентаре WGO (места хора/органа — игра ищет их по группе "zombie").
+        private static bool InventoryHas(Inventory inv, Item item)
+        {
+            if (inv == null || item == null) return false;
+            try
+            {
+                var data = inv.Data;
+                var items = data != null ? data.Inventory : null;
+                if (ListHas(items, item)) return true;
+            }
+            catch { }
+            try
+            {
+                if (ListHas(inv.GetItemsByGroupId("zombie"), item)) return true;
+            }
+            catch { }
+            return false;
+        }
+
+        private static bool ListHas(List<Item> items, Item item)
+        {
+            if (items == null) return false;
+            for (int i = 0; i < items.Count; i++)
+            {
+                var it = items[i];
+                if (it == null) continue;
+                try { if (it.UniqueId == item.UniqueId) return true; } catch { }
+            }
+            return false;
         }
 
         // Кэш тел, лежащих в мире: полный скан сцены не чаще раза в 3 секунды.
@@ -178,6 +312,10 @@ namespace GK2ZombieHQ
                     // Показываем всех: и тех, кто в мире, и тех, у кого тела нет
                     // ("нет тела в мире" — так видны пропавшие из-за бага зомби).
                     var state = StateOf(z);
+                    // "Нет тела в мире" не показываем: так выглядят и сожжённые в крематории
+                    // (запись в сейве остаётся), и потерянные из-за бага — в списке им делать нечего.
+                    // Их количество всё равно видно в заголовке панели ("всего M").
+                    if (state == ZombieState.OffWorld) continue;
 
                     result.Add(new RosterEntry
                     {
@@ -189,11 +327,15 @@ namespace GK2ZombieHQ
                             Kind = MapKind(z.ZombieType),
                             WhiteSkulls = z.WhiteSkulls,
                             RedSkulls = z.RedSkulls,
+                            TechBlue = z.techBlue,
+                            TechGreen = z.techGreen,
+                            TechRed = z.techRed,
                             Collar = SafeItemHeader(z.Collar),
                             Activity = z.WorkerActivity != null ? z.WorkerActivity.ToString() : null,
                             State = state,
-                            // "Отозвать" (в переноску) осмысленно только для тех, у кого есть тело в мире.
-                            CanRecall = state != ZombieState.OffWorld && state != ZombieState.InHands
+                            // "Отозвать" (в переноску) осмысленно только для тех, у кого есть тело в мире
+                            // и оно не на столе/в руках.
+                            CanRecall = state == ZombieState.Working || state == ZombieState.Free || state == ZombieState.Lying
                         }
                     });
                 }

@@ -35,6 +35,20 @@ namespace GK2ZombieHQ
         internal static Sprite PanelSprite { get { Ensure(); return _panelSprite; } }
         internal static Sprite ZombieIcon { get { Ensure(); return _zombieIcon; } }
 
+        // TMP-ассет, в котором есть нужный глиф (например иконка зомби из зоны воскрешения).
+        // Сначала берём уже найденный ассет со "skull", иначе ищем по всем спрайт-ассетам.
+        internal static TMP_SpriteAsset SpriteAssetFor(string glyphName)
+        {
+            Ensure();
+            if (string.IsNullOrEmpty(glyphName)) return null;
+            if (_spriteAsset != null && _spriteAsset.GetSpriteIndexFromName(glyphName) >= 0) return _spriteAsset;
+            foreach (var sa in Resources.FindObjectsOfTypeAll<TMP_SpriteAsset>())
+            {
+                if (sa != null && sa.GetSpriteIndexFromName(glyphName) >= 0) return sa;
+            }
+            return null;
+        }
+
         // Ищем спрайт игровой кнопки (LazyButton) — пересканируем при открытии панели,
         // т.к. в главном меню и в игре кнопки разные.
         internal static void RefreshButtonSprite()

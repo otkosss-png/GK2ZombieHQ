@@ -21,13 +21,16 @@ namespace GK2ZombieHQ.Core
 
         public static bool OverLimit(int count, int limit) => limit > 0 && count > limit;
 
-        // Заголовок панели: "Зомби: N", а если в сейве зомби больше, чем видно в мире,
-        // показываем общее число — так видно "потерявшихся" (упавших/пропавших) зомби.
-        public static string Header(ZombieLanguage lang, int count, int total)
+        // Заголовок панели: "Зомби: N / лимит" (лимит — из игры, качество зоны воскрешения),
+        // плюс "· всего M", если в сейве зомби больше, чем видно в мире (так видно пропавших).
+        public static string Header(ZombieLanguage lang, int count, int limit, int total)
         {
-            var text = Count(lang, count, 0);
+            var text = Count(lang, count, limit);
             if (total <= count || total <= 0) return text;
             return text + (lang == ZombieLanguage.Ru ? " · всего " : " · total ") + total;
         }
+
+        // Качество зоны — float, но лимит зомби целый (20.9 -> 20); отрицательное = лимита нет.
+        public static int LimitOf(float quality) => quality <= 0f ? -1 : (int)quality;
     }
 }

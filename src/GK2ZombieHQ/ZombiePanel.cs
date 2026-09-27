@@ -317,6 +317,19 @@ namespace GK2ZombieHQ
         }
 
         // Иконка черепа (белый/красный глиф TMP) + число.
+        // Спрайт-ассет с глифами кристаллов технологий (tech_blue/tech_green/tech_red).
+        private static TMP_SpriteAsset _techAsset;
+        private static bool _techAssetResolved;
+
+        private static TMP_SpriteAsset TechAsset()
+        {
+            if (_techAssetResolved) return _techAsset;
+            _techAssetResolved = true;
+            _techAsset = GameStyle.SpriteAssetFor("tech_blue");
+            Plugin.Log.LogInfo("style: tech glyph asset = " + (_techAsset != null ? _techAsset.name : "none"));
+            return _techAsset;
+        }
+
         private static void MakeSkull(RectTransform row, float rightOffset, string glyph, int count)
         {
             var g = UiFactory.Rect("Skull", row);
@@ -369,7 +382,9 @@ namespace GK2ZombieHQ
 
             ZombieRoster.RefreshBodies(true);
             var entries = ZombieRoster.Load();
-            _countLabel.text = HudFormat.Header(ZombieText.Language, entries.Count, ZombieRoster.Total());
+            int limit = ZombieRoster.Limit();
+            _countLabel.text = HudFormat.Header(ZombieText.Language, entries.Count, limit, ZombieRoster.Total());
+            _countLabel.color = HudFormat.OverLimit(entries.Count, limit) ? GameStyle.Danger : GameStyle.Text;
             if (entries.Count == 0)
             {
                 var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 24, TextAlignmentOptions.Left);
@@ -413,6 +428,18 @@ namespace GK2ZombieHQ
 
                 MakeSkull(row, -985, "rskull", e.Info.RedSkulls);
                 MakeSkull(row, -1100, "skull", e.Info.WhiteSkulls);
+
+                // Очки технологий зомби (синие/зелёные/красные кристаллы) — второй строкой под ошейником.
+                var techAsset = TechAsset();
+                var tech = UiFactory.Label("Tech", row, "", 24, TextAlignmentOptions.Right);
+                if (techAsset != null) tech.spriteAsset = techAsset;
+                tech.text = RosterLogic.Tech(e.Info, techAsset != null);
+                tech.textWrappingMode = TextWrappingModes.NoWrap;
+                var trt = tech.rectTransform;
+                trt.anchorMin = new Vector2(1, 0); trt.anchorMax = new Vector2(1, 0);
+                trt.pivot = new Vector2(1, 0);
+                trt.sizeDelta = new Vector2(300, 24);
+                trt.anchoredPosition = new Vector2(-660, 4);
 
                 var entry = e;
 

@@ -8,7 +8,7 @@ using UnityEngine;
 namespace GK2ZombieHQ
 {
     [BepInDependency("ru.superman4eg.gk2.framework")]
-    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.3.4")]
+    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.4.2")]
     public sealed class Plugin : BaseUnityPlugin
     {
         public const string Guid = "otkosss.gk2.zombiehq";
@@ -51,9 +51,10 @@ namespace GK2ZombieHQ
             if (Mod.HudEnabled != null) return;
             Mod.Language = Config.Bind("General", "Language", "en", "auto | en | ru");
             Mod.HudEnabled = Config.Bind("Hud", "Enabled", true, "Show the zombie count HUD");
-            Mod.HudFontSize = Config.Bind("Hud", "FontSize", 60, "HUD font size");
-            Mod.HudOffsetX = Config.Bind("Hud", "OffsetX", 12, "HUD X offset (px)");
-            Mod.HudOffsetY = Config.Bind("Hud", "OffsetY", 1000, "HUD Y offset (px)");
+            Mod.HudBackground = Config.Bind("Hud", "Background", false, "Draw a dark plate behind the HUD icon and number");
+            Mod.HudFontSize = Config.Bind("Hud", "FontSize", 30, "HUD font size");
+            Mod.HudOffsetX = Config.Bind("Hud", "OffsetX", 274, "HUD X offset (px)");
+            Mod.HudOffsetY = Config.Bind("Hud", "OffsetY", 113, "HUD Y offset (px)");
             Mod.HudToggleKey = Config.Bind("Keys", "HudToggle", new KeyboardShortcut(KeyCode.Z), "Toggle HUD");
             Mod.PanelKey = Config.Bind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8), "Open the zombie panel");
             Mod.PanelGamepad = Config.Bind("Keys", "PanelGamepad", 6, "Gamepad joystick button index to toggle the panel (-1 = off)");
