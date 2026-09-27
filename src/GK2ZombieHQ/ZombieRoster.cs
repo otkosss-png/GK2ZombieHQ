@@ -23,6 +23,14 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("zombie count: " + ex.Message); return -1; }
         }
 
+        // Сейв загружен? В главном меню PlayerData == null — тогда мод молчит
+        // (иначе HUD/панель активны в меню, а клик дёргает игру без сейва и роняет апдейт).
+        internal static bool GameReady()
+        {
+            try { return MainGame.PlayerData != null; }
+            catch { return false; }
+        }
+
         // Число зомби, находящихся в мире (без лежащих на столе воскрешения/в хранилище).
         internal static int CountInWorld()
         {

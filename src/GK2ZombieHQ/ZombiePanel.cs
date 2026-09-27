@@ -223,6 +223,7 @@ namespace GK2ZombieHQ
         internal void Toggle()
         {
             if (_root == null) return;
+            if (!_root.activeSelf && !ZombieRoster.GameReady()) return; // в меню не открываем
             bool show = !_root.activeSelf;
             _root.SetActive(show);
             if (show) { Refresh(); SetPaused(true); }
@@ -234,6 +235,8 @@ namespace GK2ZombieHQ
             try
             {
                 if (_root == null) return;
+                // Сейв выгружен (выход в меню) — закрываем панель и снимаем паузу.
+                if (_root.activeSelf && !ZombieRoster.GameReady()) { _root.SetActive(false); SetPaused(false); return; }
                 if (Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey)) Toggle();
                 if (!_root.activeSelf) return;
 

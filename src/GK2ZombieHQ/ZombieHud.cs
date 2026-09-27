@@ -108,7 +108,7 @@ namespace GK2ZombieHQ
 
                 int count = ZombieRoster.CountInWorld();
 
-                bool gameActive = count >= 0;
+                bool gameActive = count >= 0 && ZombieRoster.GameReady();
                 bool show = gameActive && _visible;
                 if (_canvasGo.activeSelf != show) _canvasGo.SetActive(show);
                 if (!show || _text == null) return;
