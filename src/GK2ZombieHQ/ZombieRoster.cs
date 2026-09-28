@@ -123,17 +123,6 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("zombie limit: " + ex.Message); return -1; }
         }
 
-        // Сколько зомби вообще есть в сейве (включая лежащих и без тела) — для заголовка панели.
-        internal static int Total()
-        {
-            try
-            {
-                var sys = MainGame.ZombieSystemData;
-                if (sys != null && sys.Cache != null) return sys.Cache.Count;
-            }
-            catch (Exception ex) { Plugin.Log.LogWarning("zombie total: " + ex.Message); }
-            return -1;
-        }
 
         // Зомби есть в сцене: в списке зомби в мире или в WorldData.
         internal static bool InScene(ZombieWgoData z)

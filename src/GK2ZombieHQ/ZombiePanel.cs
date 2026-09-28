@@ -508,7 +508,7 @@ namespace GK2ZombieHQ
             ZombieRoster.RefreshBodies(true);
             var entries = ZombieRoster.Load();
             int limit = ZombieRoster.Limit();
-            _countLabel.text = HudFormat.Header(ZombieText.Language, entries.Count, limit, ZombieRoster.Total());
+            _countLabel.text = HudFormat.Count(ZombieText.Language, entries.Count, limit);
             _countLabel.color = HudFormat.OverLimit(entries.Count, limit) ? GameStyle.Danger : GameStyle.Text;
             if (entries.Count == 0)
             {
