@@ -43,17 +43,28 @@ namespace GK2ZombieHQ.Core
 
         public static string Skulls(ZombieInfo z) => z == null ? "0/0" : z.WhiteSkulls + "/" + z.RedSkulls;
 
-        // Очки технологий зомби (синие/зелёные/красные "кристаллы"), как в окне зомби.
-        // withGlyphs — рисовать игровыми глифами tech_blue/tech_green/tech_red через <sprite>.
+        // Красные черепа как на вкладке "Способности" окна зомби: "потрачено/всего" — "0/5".
+        public static string RedSkulls(ZombieInfo z)
+            => z == null ? "0/0" : z.PerksUsed + "/" + z.RedSkulls;
+
+        // Заголовок строки панели: "N. Имя · Тип".
+        public static string RowTitle(int number, string name, string kind)
+        {
+            var title = number + ". " + name;
+            return string.IsNullOrEmpty(kind) ? title : title + " · " + kind;
+        }
+
+        // Очки технологий зомби (красные/зелёные/синие "кристаллы").
+        // withGlyphs — рисовать игровыми глифами tech_red/tech_green/tech_blue через <sprite>.
         public static string Tech(ZombieInfo z, bool withGlyphs)
         {
             int blue = z != null ? z.TechBlue : 0;
             int green = z != null ? z.TechGreen : 0;
             int red = z != null ? z.TechRed : 0;
-            if (!withGlyphs) return blue + "  " + green + "  " + red;
-            return "<sprite name=\"tech_blue\"> " + blue
+            if (!withGlyphs) return red + "  " + green + "  " + blue;
+            return "<sprite name=\"tech_red\"> " + red
                 + "  <sprite name=\"tech_green\"> " + green
-                + "  <sprite name=\"tech_red\"> " + red;
+                + "  <sprite name=\"tech_blue\"> " + blue;
         }
 
         // Состояние зомби по данным игры:

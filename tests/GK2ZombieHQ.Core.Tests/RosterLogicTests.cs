@@ -52,17 +52,35 @@ namespace GK2ZombieHQ.Core.Tests
             Assert.False(RosterLogic.InWorld(ZombieState.OffWorld));
         }
 
-        [Fact] public void Tech_formats_with_glyphs()
+        [Fact] public void Tech_formats_with_glyphs_red_green_blue()
         {
             var z = new ZombieInfo { TechBlue = 0, TechGreen = 1, TechRed = 75 };
-            Assert.Equal("<sprite name=\"tech_blue\"> 0  <sprite name=\"tech_green\"> 1  <sprite name=\"tech_red\"> 75",
+            Assert.Equal("<sprite name=\"tech_red\"> 75  <sprite name=\"tech_green\"> 1  <sprite name=\"tech_blue\"> 0",
                 RosterLogic.Tech(z, withGlyphs: true));
         }
 
-        [Fact] public void Tech_formats_without_glyphs()
+        [Fact] public void Tech_formats_without_glyphs_red_green_blue()
         {
-            var z = new ZombieInfo { TechBlue = 2, TechGreen = 0, TechRed = 0 };
-            Assert.Equal("2  0  0", RosterLogic.Tech(z, withGlyphs: false));
+            var z = new ZombieInfo { TechBlue = 2, TechGreen = 0, TechRed = 5 };
+            Assert.Equal("5  0  2", RosterLogic.Tech(z, withGlyphs: false));
+        }
+
+        [Fact] public void Red_skulls_show_spent_on_perks_like_abilities_tab()
+        {
+            // Как вкладка "Способности 0/5": потрачено / всего красных черепов.
+            Assert.Equal("0/5", RosterLogic.RedSkulls(new ZombieInfo { RedSkulls = 5, PerksUsed = 0 }));
+            Assert.Equal("3/5", RosterLogic.RedSkulls(new ZombieInfo { RedSkulls = 5, PerksUsed = 3 }));
+        }
+
+        [Fact] public void Red_skulls_null_is_zero()
+        {
+            Assert.Equal("0/0", RosterLogic.RedSkulls(null));
+        }
+
+        [Fact] public void Row_number_prefixes_name()
+        {
+            Assert.Equal("1. Ann · Gardener", RosterLogic.RowTitle(1, "Ann", "Gardener"));
+            Assert.Equal("12. Bob", RosterLogic.RowTitle(12, "Bob", null));
         }
 
         [Fact] public void Tech_null_is_zeroes()

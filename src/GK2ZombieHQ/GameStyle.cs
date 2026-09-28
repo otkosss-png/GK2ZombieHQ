@@ -54,6 +54,45 @@ namespace GK2ZombieHQ
             catch { return null; }
         }
 
+        // Значки предметов нарисованы с синим контуром-заготовкой: игра рисует их материалом
+        // ячейки UIItemCell.icon, шейдер которого перекрашивает синий в цвет из _Color
+        // (ImageExtensions.BlueColorReplace(colors.NormalColor)). Обычный UI-материал оставляет
+        // контур синим, поэтому берём материал у игровой ячейки — один общий на все значки.
+        private static Material _itemIconMat;
+        private static readonly int TintId = Shader.PropertyToID("_Color");
+
+        internal static void ApplyItemIconMaterial(Image img)
+        {
+            if (img == null) return;
+            var mat = ItemIconMaterial();
+            if (mat != null) img.material = mat;
+        }
+
+        private static Material ItemIconMaterial()
+        {
+            if (_itemIconMat != null) return _itemIconMat;
+            try
+            {
+                var iconField = HarmonyLib.AccessTools.Field(typeof(UIItemCell), "icon");
+                var colorsField = HarmonyLib.AccessTools.Field(typeof(UIItemCell), "colors");
+                if (iconField == null || colorsField == null) return null;
+                foreach (var cell in Resources.FindObjectsOfTypeAll<UIItemCell>())
+                {
+                    var icon = cell != null ? iconField.GetValue(cell) as Image : null;
+                    var colors = cell != null ? colorsField.GetValue(cell) as ImageColors : null;
+                    var src = icon != null ? icon.material : null;
+                    if (src == null || colors == null || !src.HasProperty(TintId)) continue;
+                    var mat = new Material(src);
+                    mat.SetColor(TintId, colors.NormalColor);
+                    _itemIconMat = mat;
+                    Plugin.Log.LogInfo("style: item icon material = " + src.name + " (" + (src.shader != null ? src.shader.name : "?") + ")");
+                    break;
+                }
+            }
+            catch (System.Exception ex) { Plugin.Log.LogWarning("style item icon material: " + ex.Message); }
+            return _itemIconMat;
+        }
+
         // TMP-ассет, в котором есть нужный глиф (например иконка зомби из зоны воскрешения).
         // Сначала берём уже найденный ассет со "skull", иначе ищем по всем спрайт-ассетам.
         internal static TMP_SpriteAsset SpriteAssetFor(string glyphName)
@@ -84,6 +123,7 @@ namespace GK2ZombieHQ
                     if (n.Contains("btn-simple") && n.Contains("red") && !n.Contains("trade") && !n.Contains("green"))
                     {
                         _buttonSprite = sp;
+                        TakeMenuFont(lb);
                         break;
                     }
                 }
@@ -105,6 +145,35 @@ namespace GK2ZombieHQ
             catch (System.Exception ex) { Plugin.Log.LogWarning("style scan: " + ex.Message); }
         }
 
+        // Шрифт как в меню игры («Пауза»): берём у надписи красной кнопки меню шрифт вместе
+        // с ЕГО материалом — чужой материал к шрифту может сделать текст невидимым.
+        private static void TakeMenuFont(LazyButton lb)
+        {
+            try
+            {
+                var label = lb != null ? lb.GetComponentInChildren<TMP_Text>(true) : null;
+                if (label == null || label.font == null) return;
+                _font = label.font;
+                _fontMat = label.fontSharedMaterial;
+                Plugin.Log.LogInfo("style: menu font = " + _font.name + " / " + (_fontMat != null ? _fontMat.name : "default"));
+            }
+            catch { }
+        }
+
+        // Перекрасить шрифтом меню все надписи под root (заголовки, строки, кнопки); цвета не трогаем.
+        internal static void ApplyFont(Transform root)
+        {
+            if (root == null) return;
+            Ensure();
+            if (_font == null) return;
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (t == null) continue;
+                t.font = _font;
+                if (_fontMat != null) t.fontSharedMaterial = _fontMat;
+            }
+        }
+
         private static void Ensure()
         {
             if (_done) return;
@@ -112,11 +181,12 @@ namespace GK2ZombieHQ
 
             try
             {
-                foreach (var t in Resources.FindObjectsOfTypeAll<TMP_Text>())
-                {
-                    if (t == null || t.font == null) continue;
-                    _font = t.font; _fontMat = t.fontSharedMaterial; break;
-                }
+                if (_font == null)
+                    foreach (var t in Resources.FindObjectsOfTypeAll<TMP_Text>())
+                    {
+                        if (t == null || t.font == null) continue;
+                        _font = t.font; _fontMat = t.fontSharedMaterial; break;
+                    }
             }
             catch { }
 

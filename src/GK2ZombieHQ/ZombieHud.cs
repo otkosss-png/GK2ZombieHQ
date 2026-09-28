@@ -34,6 +34,10 @@ namespace GK2ZombieHQ
         private float _glyphRetry;
         private bool _glyphApplied;
 
+        // Стиль счётчика — как у игрового "👍 0/20" (HUD.happinessLabel): шрифт, материал, цвет.
+        private bool _styled;
+        private Color _normalColor = GameStyle.Text;
+
         private void Start()
         {
             try { BuildUi(); }
@@ -154,10 +158,25 @@ namespace GK2ZombieHQ
                     ApplyIconMode(true);
                 }
 
+                if (!_styled) ApplyGameStyle();
+
                 // Лимит даёт игра (качество зоны воскрешения): "N / M", красным при превышении.
-                _text.color = HudFormat.OverLimit(count, limit) ? GameStyle.Danger : GameStyle.Text;
+                _text.color = HudFormat.OverLimit(count, limit) ? GameStyle.Danger : _normalColor;
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("hud: " + ex.Message); }
+        }
+
+        // Копируем стиль с игрового лейбла "лайков"; размер оставляем из настройки мода.
+        private void ApplyGameStyle()
+        {
+            var label = ZombieRoster.GameHappinessLabel();
+            if (label == null || label.font == null) return;
+            _text.font = label.font;
+            _text.fontSharedMaterial = label.fontSharedMaterial;
+            _text.fontStyle = label.fontStyle;
+            _normalColor = label.color;
+            _styled = true;
+            Plugin.Log.LogInfo("hud: style from happinessLabel font=" + label.font.name + " color=" + label.color);
         }
 
         // Иконку ищем лениво (зона доступна только с загруженным сейвом) и кэшируем;

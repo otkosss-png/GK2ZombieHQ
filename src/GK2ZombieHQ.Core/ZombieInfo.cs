@@ -9,10 +9,11 @@ namespace GK2ZombieHQ.Core
         public ZombieKind Kind;
         public int WhiteSkulls;
         public int RedSkulls;
+        // Сколько красных черепов потрачено на способности (ZombieWgoData.GetUsedPerksCount).
+        public int PerksUsed;
         public int TechBlue;
         public int TechGreen;
         public int TechRed;
-        public string Collar;
         public string Activity;
         public string Zone;
         public ZombieState State;

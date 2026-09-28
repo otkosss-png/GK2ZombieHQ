@@ -15,7 +15,8 @@ namespace GK2ZombieHQ
         private GameObject _root;
         private TextMeshProUGUI _label;
         private Button _centerButton;
-        private WgoData _zombie;
+        private ZombieWgoData _zombie;
+        private DropView _body; // тело на полу (если лежит) — кэш для WorldPosition
         private Transform _savedTarget;
 
         internal bool IsActive => _zombie != null && _root != null && _root.activeSelf;
@@ -28,7 +29,7 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("camera ui: " + ex); }
         }
 
-        internal void Follow(WgoData zombie, string displayName)
+        internal void Follow(ZombieWgoData zombie, string displayName)
         {
             try
             {
@@ -37,9 +38,10 @@ namespace GK2ZombieHQ
                 if (!IsActive && cam != null) _savedTarget = cam.Target;
 
                 _zombie = zombie;
+                _body = null;
                 if (_label != null) _label.text = ZombieText.Get("CameraFollow") + ": " + displayName;
                 UiFactory.ApplyButtonSprite(_centerButton);
-                if (_root != null) _root.SetActive(true);
+                if (_root != null) { GameStyle.ApplyFont(_root.transform); _root.SetActive(true); }
             }
             catch (Exception ex) { Plugin.Log.LogWarning("camera follow: " + ex); }
         }
@@ -49,6 +51,7 @@ namespace GK2ZombieHQ
             try
             {
                 _zombie = null;
+                _body = null;
                 if (_root != null) _root.SetActive(false);
                 var cam = ActiveCamera();
                 if (cam != null && _savedTarget != null) cam.SetTargetInstant(_savedTarget);
@@ -67,7 +70,7 @@ namespace GK2ZombieHQ
             try
             {
                 var cam = ActiveCamera();
-                if (cam != null && _zombie != null) cam.SetPosition(_zombie.Position, 0f, null);
+                if (cam != null && _zombie != null) cam.SetPosition(ZombieRoster.WorldPosition(_zombie, ref _body), 0f, null);
             }
             catch (Exception ex) { Plugin.Log.LogWarning("camera center: " + ex); }
         }
@@ -78,7 +81,7 @@ namespace GK2ZombieHQ
             {
                 if (!IsActive) return;
                 var cam = ActiveCamera();
-                if (cam != null) cam.SetPosition(_zombie.Position, 0f, null);
+                if (cam != null) cam.SetPosition(ZombieRoster.WorldPosition(_zombie, ref _body), 0f, null);
             }
             catch (Exception ex) { Plugin.Log.LogWarning("camera update: " + ex); }
         }

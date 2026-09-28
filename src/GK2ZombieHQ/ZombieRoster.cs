@@ -58,6 +58,21 @@ namespace GK2ZombieHQ
             catch { return true; }
         }
 
+        // Игровой лейбл "лайков" (👍 0/20) в HUD — образец шрифта и цвета для нашего счётчика.
+        private static readonly System.Reflection.FieldInfo HappinessLabelField =
+            HarmonyLib.AccessTools.Field(typeof(global::HUD), "happinessLabel");
+
+        internal static TMPro.TextMeshProUGUI GameHappinessLabel()
+        {
+            try
+            {
+                GameHudVisible(); // находит и кэширует _gameHud
+                return _gameHud != null && HappinessLabelField != null
+                    ? HappinessLabelField.GetValue(_gameHud) as TMPro.TextMeshProUGUI : null;
+            }
+            catch { return null; }
+        }
+
         // Число зомби, чьё тело реально в мире (работает, свободен или лежит на полу).
         // Данные без тела (стол воскрешения, хранилище, "призраки" от бага) не считаем.
         internal static int CountInWorld()
@@ -159,19 +174,20 @@ namespace GK2ZombieHQ
 
         internal static ZombiePlace PlaceOf(ZombieWgoData z)
         {
-            if (InContainers(z, TableContainers)) return ZombiePlace.Table;
-            if (InContainers(z, ChoirContainers)) return ZombiePlace.Choir;
+            if (ContainerOf(z, TableContainers) != null) return ZombiePlace.Table;
+            if (ContainerOf(z, ChoirContainers) != null) return ZombiePlace.Choir;
             return ZombiePlace.None;
         }
 
-        private static bool InContainers(ZombieWgoData z, string[] ids)
+        // Стол/паллета/место хора, в чьём инвентаре лежит тело зомби, или null.
+        private static WgoData ContainerOf(ZombieWgoData z, string[] ids)
         {
             try
             {
                 var item = z != null ? z.ZombieItem : null;
-                if (item == null) return false;
+                if (item == null) return null;
                 var world = MainGame.WorldData;
-                if (world == null) return false;
+                if (world == null) return null;
                 foreach (var id in ids)
                 {
                     var list = world.GetWgoDataList(id);
@@ -180,12 +196,12 @@ namespace GK2ZombieHQ
                     {
                         var wgo = list[i];
                         if (wgo == null) continue;
-                        if (InventoryHas(wgo.Inventory, item)) return true;
+                        if (InventoryHas(wgo.Inventory, item)) return wgo;
                     }
                 }
             }
             catch { }
-            return false;
+            return null;
         }
 
         // Тело лежит либо во внешнем инвентаре стола (Inventory.Data.Inventory),
@@ -264,6 +280,58 @@ namespace GK2ZombieHQ
             catch (Exception ex) { Plugin.Log.LogWarning("bodies scan: " + ex.Message); }
         }
 
+        // Дроп (тело на земле) этого зомби в загруженной сцене, или null.
+        // У лежащего зомби WgoData.Position — последняя "станционная" позиция (лаборатория
+        // воскрешения), а реальное место — позиция дропа.
+        internal static DropView FindBodyDrop(ZombieWgoData z)
+        {
+            if (z == null) return null;
+            try
+            {
+                var views = UnityEngine.Object.FindObjectsOfType<DropView>();
+                if (views == null) return null;
+                foreach (var v in views)
+                    if (IsBodyDropOf(v, z)) return v;
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("find body drop: " + ex.Message); }
+            return null;
+        }
+
+        // Дроп всё ещё тело именно этого зомби (DropView переиспользуются пулом).
+        internal static bool IsBodyDropOf(DropView v, ZombieWgoData z)
+        {
+            try
+            {
+                if (v == null || z == null || !v.isActiveAndEnabled) return false;
+                if (!(v.InteractionHandler is ZombieDropInteractionHandler)) return false;
+                var item = v.Data != null ? v.Data.Item : null;
+                var sys = MainGame.ZombieSystemData;
+                return item != null && sys != null && ReferenceEquals(sys.GetZombie(item.UniqueId), z);
+            }
+            catch { return false; }
+        }
+
+        // Где зомби на самом деле: в руках игрока — у игрока, лежит — у тела, в хоре/на
+        // столе — у этого места (тело там предмет в инвентаре), иначе — WgoData.
+        internal static UnityEngine.Vector3 WorldPosition(ZombieWgoData z, ref DropView bodyCache)
+        {
+            if (HeldByPlayer(z))
+            {
+                var pd = MainGame.PlayerData;
+                if (pd != null && pd.position != null) return pd.position.Value;
+            }
+            // BodyInWorld — кэшированный (раз в 3 с) скан, поэтому полный поиск дропа
+            // не идёт каждый кадр, когда тела в загруженной сцене нет.
+            if (!IsBodyDropOf(bodyCache, z)) bodyCache = BodyInWorld(z) ? FindBodyDrop(z) : null;
+            if (bodyCache != null && bodyCache.Data != null) return bodyCache.Data.Position;
+            if (!InScene(z))
+            {
+                var place = ContainerOf(z, ChoirContainers) ?? ContainerOf(z, TableContainers);
+                if (place != null) return place.Position;
+            }
+            return z.Position;
+        }
+
         // Тело зомби лежит в переноске игрока (а не на земле).
         internal static bool HeldByPlayer(ZombieWgoData z)
         {
@@ -327,10 +395,10 @@ namespace GK2ZombieHQ
                             Kind = MapKind(z.ZombieType),
                             WhiteSkulls = z.WhiteSkulls,
                             RedSkulls = z.RedSkulls,
+                            PerksUsed = UsedPerks(z),
                             TechBlue = z.techBlue,
                             TechGreen = z.techGreen,
                             TechRed = z.techRed,
-                            Collar = SafeItemHeader(z.Collar),
                             Gear = BuildGear(z),
                             Activity = z.WorkerActivity != null ? z.WorkerActivity.ToString() : null,
                             State = state,
@@ -360,6 +428,11 @@ namespace GK2ZombieHQ
                     Plugin.Log.LogWarning("recall: нет свободного overhead-слота");
                     return false;
                 }
+                // Лежащего на полу зомби забираем как игра по "[E] Взять": дроп -> в переноску.
+                // PutZombieFromGameSceneToStoreForPlayer работает только с зомби в сцене.
+                var body = FindBodyDrop(entry.Data);
+                if (body != null)
+                    return body.InteractionHandler.Interact();
                 entry.Data.UnAttachFromWgoData(true);
                 MainGame.ZombieSystemData.PutZombieFromGameSceneToStoreForPlayer(pd, entry.Data);
                 return true;
@@ -398,6 +471,14 @@ namespace GK2ZombieHQ
                 return string.IsNullOrEmpty(loc) ? name : loc;
             }
             catch { return name; }
+        }
+
+        // Красные черепа, потраченные на способности — то, что игра пишет на вкладке
+        // "Способности N/M" (UIZombieWorkerWindow.RedrawPerksTabLabel).
+        private static int UsedPerks(ZombieWgoData z)
+        {
+            try { return z.GetUsedPerksCount(); }
+            catch { return 0; }
         }
 
         // Название предмета (ошейник) — по заголовку из игры, а не по id.

@@ -339,48 +339,89 @@ namespace GK2ZombieHQ
             return _techAsset;
         }
 
-        private static void MakeSkull(RectTransform row, float rightOffset, string glyph, int count)
-        {
-            var g = UiFactory.Rect("Skull", row);
-            g.anchorMin = new Vector2(1, 0.5f); g.anchorMax = new Vector2(1, 0.5f);
-            g.pivot = new Vector2(1, 0.5f); g.sizeDelta = new Vector2(110, 50); g.anchoredPosition = new Vector2(rightOffset, 0);
+        // Раскладка строки (слева направо): "N. Имя · Тип", белые черепа, красные "3/5",
+        // снаряжение (ошейник/инструмент/броня), очки красные/зелёные/синие. Справа — кнопки.
+        // Вторая строка: статус под именем, переносимые вещи носильщика под снаряжением.
+        private const float RowHeight = 108f;
+        private const float MainLineY = 8f;
+        private const float SecondLineY = -36f;
+        private const float TitleX = 16f, TitleWidth = 400f;
+        private const float WhiteX = 425f, WhiteWidth = 85f;
+        private const float RedX = 510f, RedWidth = 120f;
+        private const float GearX = 635f;
+        private const float TechX = 845f, TechWidth = 240f;
+        private const float ButtonWidth = 180f, ButtonHeight = 60f, ButtonGap = 10f, ButtonRight = 16f;
 
-            var label = UiFactory.Label("Value", g, "", 30, TextAlignmentOptions.Left);
-            var sa = GameStyle.SpriteAsset;
-            if (sa != null) label.spriteAsset = sa;
-            label.text = (sa != null ? "<sprite name=\"" + glyph + "\"> " : "") + count;
-            var lrt = label.rectTransform;
-            lrt.anchorMin = new Vector2(0, 0.5f); lrt.anchorMax = new Vector2(0, 0.5f); lrt.pivot = new Vector2(0, 0.5f);
-            lrt.sizeDelta = new Vector2(105, 44); lrt.anchoredPosition = Vector2.zero;
+        // Прямоугольник, привязанный к левому краю строки по центру по вертикали.
+        private static RectTransform LeftRect(string name, RectTransform row, float x, float y, float w, float h)
+        {
+            var r = UiFactory.Rect(name, row);
+            r.anchorMin = new Vector2(0, 0.5f); r.anchorMax = new Vector2(0, 0.5f);
+            r.pivot = new Vector2(0, 0.5f);
+            r.sizeDelta = new Vector2(w, h);
+            r.anchoredPosition = new Vector2(x, y);
+            return r;
         }
 
-        // Строка снаряжения: значки ошейника/инструмента/брони (пустые — тусклая заглушка) и
-        // переносимых вещей. Наведение на значок показывает название в подсказке панели.
-        private const float GearIconSize = 30f;
-        private const float GearIconStep = 34f;
-        private const float GearStripRight = -660f;
+        private static TextMeshProUGUI LeftLabel(string name, RectTransform row, string text, int size, float x, float y, float w, float h, Color? color = null)
+        {
+            var box = LeftRect(name, row, x, y, w, h);
+            var label = color.HasValue
+                ? UiFactory.Label("Text", box, text, size, TextAlignmentOptions.Left, color.Value)
+                : UiFactory.Label("Text", box, text, size, TextAlignmentOptions.Left);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            var lrt = label.rectTransform;
+            lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
+            lrt.offsetMin = Vector2.zero; lrt.offsetMax = Vector2.zero;
+            return label;
+        }
+
+        // Кнопка строки справа налево: Открыть, Камера, Отозвать.
+        private Button MakeRowButton(RectTransform row, string key, ref float right)
+        {
+            var btn = UiFactory.TextButton(key, row, ZombieText.Get(key), 28);
+            var rt = btn.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1, 0.5f); rt.anchorMax = new Vector2(1, 0.5f);
+            rt.pivot = new Vector2(1, 0.5f); rt.sizeDelta = new Vector2(ButtonWidth, ButtonHeight);
+            rt.anchoredPosition = new Vector2(-right, MainLineY);
+            right += ButtonWidth + ButtonGap;
+            RegisterButton(btn);
+            return btn;
+        }
+
+        private static void MakeSkull(RectTransform row, float x, float width, string glyph, string value)
+        {
+            var label = LeftLabel("Skull", row, "", 30, x, MainLineY, width, 44);
+            var sa = GameStyle.SpriteAsset;
+            if (sa != null) label.spriteAsset = sa;
+            label.text = (sa != null ? "<sprite name=\"" + glyph + "\"> " : "") + value;
+        }
+
+        // Снаряжение: ошейник/инструмент/броня (пустые — тусклая заглушка) на основной строке,
+        // переносимые вещи носильщика — мельче, второй строкой. Наведение на значок
+        // показывает название в подсказке панели.
+        private const int EquipSlots = 3;
+        // Значки снаряжения — высотой с кнопки строки.
+        private const float GearIconSize = ButtonHeight, GearIconStep = ButtonHeight + 4f;
+        private const float CarriedIconSize = 24f, CarriedIconStep = 28f;
 
         private void MakeGearStrip(RectTransform row, ZombieInfo info)
         {
             if (info == null || info.Gear == null || info.Gear.Count == 0) return;
 
-            var strip = UiFactory.Rect("Gear", row);
-            strip.anchorMin = new Vector2(1, 1); strip.anchorMax = new Vector2(1, 1);
-            strip.pivot = new Vector2(1, 1); strip.sizeDelta = new Vector2(0, GearIconSize);
-            strip.anchoredPosition = new Vector2(GearStripRight, -4);
-
             for (int i = 0; i < info.Gear.Count; i++)
             {
                 var icon = info.Gear[i];
-                var go = UiFactory.Rect("Slot" + i, strip);
-                go.anchorMin = new Vector2(1, 1); go.anchorMax = new Vector2(1, 1);
-                go.pivot = new Vector2(1, 1);
-                go.sizeDelta = new Vector2(GearIconSize, GearIconSize);
-                go.anchoredPosition = new Vector2(-i * GearIconStep, 0);
+                bool equip = i < EquipSlots;
+                float size = equip ? GearIconSize : CarriedIconSize;
+                float x = equip ? GearX + i * GearIconStep : GearX + (i - EquipSlots) * CarriedIconStep;
+                var go = LeftRect("Slot" + i, row, x, equip ? MainLineY : SecondLineY, size, size);
 
                 var sprite = icon.IsEmpty ? null : GameStyle.ItemSprite(icon.Id, icon.IconId);
                 var img = go.gameObject.AddComponent<Image>();
                 img.sprite = sprite;
+                if (sprite != null) GameStyle.ApplyItemIconMaterial(img); // контур — как в игре, не синий
                 img.raycastTarget = true;
                 img.color = icon.IsEmpty
                     ? new Color(1f, 1f, 1f, 0.16f)          // пустой слот — тускло
@@ -474,89 +515,56 @@ namespace GK2ZombieHQ
                 var empty = UiFactory.Label("Empty", _content, ZombieText.Get("NoZombies"), 24, TextAlignmentOptions.Left);
                 empty.gameObject.AddComponent<LayoutElement>().preferredHeight = 40;
                 _focusIdx = -1;
+                GameStyle.ApplyFont(_root.transform);
                 return;
             }
 
+            int number = 0;
             foreach (var e in entries)
             {
+                number++;
                 var row = UiFactory.Rect("Row", _content);
-                row.gameObject.AddComponent<LayoutElement>().preferredHeight = 108;
+                row.gameObject.AddComponent<LayoutElement>().preferredHeight = RowHeight;
 
-                var name = UiFactory.Label("Name", row, e.Info.Name + "  ·  " + ZombieText.KindName(e.Info.Kind), 32, TextAlignmentOptions.Left);
-                name.textWrappingMode = TextWrappingModes.NoWrap;
-                name.overflowMode = TextOverflowModes.Ellipsis;
-                var nrt = name.rectTransform;
-                nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
-                nrt.offsetMin = new Vector2(16, 44); nrt.offsetMax = new Vector2(-1220, -6);
+                // "N. Имя · Тип" — номер порядковый в текущей сортировке панели.
+                LeftLabel("Name", row, RosterLogic.RowTitle(number, e.Info.Name, ZombieText.KindName(e.Info.Kind)),
+                    30, TitleX, MainLineY, TitleWidth, 44);
 
-                // Снаряжение: значки над ошейником (ошейник/инструмент/броня + переносимое).
-                MakeGearStrip(row, e.Info);
-
-                // Состояние ("лежит на полу" / "без станции") — второй строкой под именем.
+                // Состояние ("в хоре" / "лежит на полу") — второй строкой под именем.
                 var statusText = ZombieText.StatusName(e.Info.State);
                 if (!string.IsNullOrEmpty(statusText))
-                {
-                    var status = UiFactory.Label("Status", row, statusText, 24, TextAlignmentOptions.Left, GameStyle.Accent);
-                    status.textWrappingMode = TextWrappingModes.NoWrap;
-                    status.overflowMode = TextOverflowModes.Ellipsis;
-                    var srt = status.rectTransform;
-                    srt.anchorMin = new Vector2(0, 0); srt.anchorMax = new Vector2(1, 0);
-                    srt.pivot = new Vector2(0.5f, 0);
-                    srt.offsetMin = new Vector2(16, 4); srt.offsetMax = new Vector2(-1220, 26);
-                }
+                    LeftLabel("Status", row, statusText, 22, TitleX, SecondLineY, TitleWidth, 28, GameStyle.Accent);
 
-                if (!string.IsNullOrEmpty(e.Info.Collar))
-                {
-                    var collar = UiFactory.Label("Collar", row, e.Info.Collar, 26, TextAlignmentOptions.Right);
-                    var clrt = collar.rectTransform;
-                    clrt.anchorMin = new Vector2(1, 0.5f); clrt.anchorMax = new Vector2(1, 0.5f);
-                    clrt.pivot = new Vector2(1, 0.5f); clrt.sizeDelta = new Vector2(320, 50); clrt.anchoredPosition = new Vector2(-660, 0);
-                }
+                MakeSkull(row, WhiteX, WhiteWidth, "skull", e.Info.WhiteSkulls.ToString());
+                MakeSkull(row, RedX, RedWidth, "rskull", RosterLogic.RedSkulls(e.Info));
 
-                MakeSkull(row, -985, "rskull", e.Info.RedSkulls);
-                MakeSkull(row, -1100, "skull", e.Info.WhiteSkulls);
+                // Снаряжение: ошейник/инструмент/броня (+ переносимое носильщика второй строкой).
+                MakeGearStrip(row, e.Info);
 
-                // Очки технологий зомби (синие/зелёные/красные кристаллы) — второй строкой под ошейником.
+                // Очки технологий зомби: красные/зелёные/синие кристаллы.
                 var techAsset = TechAsset();
-                var tech = UiFactory.Label("Tech", row, "", 24, TextAlignmentOptions.Right);
+                var tech = LeftLabel("Tech", row, "", 26, TechX, MainLineY, TechWidth, 44);
                 if (techAsset != null) tech.spriteAsset = techAsset;
                 tech.text = RosterLogic.Tech(e.Info, techAsset != null);
-                tech.textWrappingMode = TextWrappingModes.NoWrap;
-                var trt = tech.rectTransform;
-                trt.anchorMin = new Vector2(1, 0); trt.anchorMax = new Vector2(1, 0);
-                trt.pivot = new Vector2(1, 0);
-                trt.sizeDelta = new Vector2(300, 24);
-                trt.anchoredPosition = new Vector2(-660, 4);
 
                 var entry = e;
+                float right = ButtonRight;
 
-                var openBtn = UiFactory.TextButton("Open", row, ZombieText.Get("Open"), 30);
-                var ort = openBtn.GetComponent<RectTransform>();
-                ort.anchorMin = new Vector2(1, 0.5f); ort.anchorMax = new Vector2(1, 0.5f);
-                ort.pivot = new Vector2(1, 0.5f); ort.sizeDelta = new Vector2(200, 60);
-                ort.anchoredPosition = new Vector2(-24, 0);
+                var openBtn = MakeRowButton(row, "Open", ref right);
                 openBtn.onClick.AddListener(() => { ZombieRoster.OpenWindow(entry); Close(); });
-                RegisterButton(openBtn);
 
-                var camBtn = UiFactory.TextButton("Camera", row, ZombieText.Get("Camera"), 30);
-                var crt2 = camBtn.GetComponent<RectTransform>();
-                crt2.anchorMin = new Vector2(1, 0.5f); crt2.anchorMax = new Vector2(1, 0.5f);
-                crt2.pivot = new Vector2(1, 0.5f); crt2.sizeDelta = new Vector2(200, 60);
-                crt2.anchoredPosition = new Vector2(-236, 0);
+                var camBtn = MakeRowButton(row, "Camera", ref right);
                 camBtn.onClick.AddListener(() => { ZombieRoster.FocusCamera(entry); Close(); });
-                RegisterButton(camBtn);
 
                 if (e.Info.CanRecall)
                 {
-                    var rec = UiFactory.TextButton("Recall", row, ZombieText.Get("Recall"), 30);
-                    var rrt = rec.GetComponent<RectTransform>();
-                    rrt.anchorMin = new Vector2(1, 0.5f); rrt.anchorMax = new Vector2(1, 0.5f);
-                    rrt.pivot = new Vector2(1, 0.5f); rrt.sizeDelta = new Vector2(200, 60);
-                    rrt.anchoredPosition = new Vector2(-448, 0);
+                    var rec = MakeRowButton(row, "Recall", ref right);
                     rec.onClick.AddListener(() => { ZombieRoster.Recall(entry); Refresh(); });
-                    RegisterButton(rec);
                 }
             }
+
+            // Шрифт как в меню игры — на все надписи панели (заголовок, строки, кнопки).
+            GameStyle.ApplyFont(_root.transform);
 
             // Сохраняем/восстанавливаем фокус, чтобы подсветка не пропадала.
             if (_focusables.Count > 0) FocusButton(Mathf.Clamp(_focusIdx, 0, _focusables.Count - 1));
