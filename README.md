@@ -16,6 +16,11 @@ its workstation.
   (stations, mine/sawmill/clay/sand with carried items, porter, the basement wheel, the
   garrison) and moves it to store. Zombies on the wheel show as "On the wheel".
 - **Camera follow** - locks the camera to a zombie and follows it; Esc restores your camera.
+  After Camera (Esc/B) or Open (closing the zombie window) the panel reopens at the same
+  scroll position and button (1.5.3).
+- **Sync the game's zombie counter** (Mods > Fix, off by default, 1.5.3) - writes the real zombie
+  count into the game's `cur_zombies_count` and rechecks the `debuff_excessive_zombie` debuff,
+  for saves where another mod removed zombies. Changes save data - use at your own risk.
 - **Gamepad support** - D-pad / left stick to move, A = select, B = close; the game pauses
   while the panel is open; long lists scroll (wheel, gamepad or drag).
 - **Settings** in the in-game **Mods** menu: language (auto = game language / en / ru / any
