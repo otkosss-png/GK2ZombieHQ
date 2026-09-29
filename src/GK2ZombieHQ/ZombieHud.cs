@@ -125,6 +125,7 @@ namespace GK2ZombieHQ
         {
             try
             {
+                Plugin.RefreshLanguage();
                 if (_canvasGo == null) return;
                 if (Input.GetKeyDown(Plugin.Mod.HudToggleKey.Value.MainKey))
                 {

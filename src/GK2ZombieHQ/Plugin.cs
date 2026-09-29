@@ -8,7 +8,7 @@ using UnityEngine;
 namespace GK2ZombieHQ
 {
     [BepInDependency("ru.superman4eg.gk2.framework")]
-    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.5.1")]
+    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.5.2")]
     public sealed class Plugin : BaseUnityPlugin
     {
         public const string Guid = "otkosss.gk2.zombiehq";
@@ -20,6 +20,7 @@ namespace GK2ZombieHQ
         {
             Instance = this;
             Log = Logger;
+            ModLocalization.EnsureFiles();
 
             Mod = new ZombieHqMod();
             try
@@ -31,10 +32,18 @@ namespace GK2ZombieHQ
                 Logger.LogWarning("GK2 Framework register failed, using local config: " + ex.Message);
             }
             EnsureSettings();
+            RefreshLanguage(force: true);
 
-            ZombieText.Language = ResolveLanguage(Mod.Language.Value);
-
-            try { new HarmonyLib.Harmony(Guid).PatchAll(typeof(Plugin).Assembly); }
+            // Патчи по классам: один несошедшийся патч не отключает остальные (как было бы с PatchAll).
+            try
+            {
+                var harmony = new HarmonyLib.Harmony(Guid);
+                foreach (var type in typeof(Plugin).Assembly.GetTypes())
+                {
+                    try { harmony.CreateClassProcessor(type).Patch(); }
+                    catch (Exception ex) { Logger.LogWarning("harmony patch " + type.Name + " failed: " + ex.Message); }
+                }
+            }
             catch (Exception ex) { Logger.LogWarning("harmony patch failed: " + ex.Message); }
 
             var go = new GameObject("GK2ZombieHQ");
@@ -49,7 +58,7 @@ namespace GK2ZombieHQ
         private void EnsureSettings()
         {
             if (Mod.HudEnabled != null) return;
-            Mod.Language = Config.Bind("General", "Language", "en", "auto | en | ru");
+            Mod.Language = Config.Bind("General", "Language", ZombieHqMod.DefaultLanguage, "auto (game language) or a code from the Localization folder: en, ru, de...");
             Mod.HudEnabled = Config.Bind("Hud", "Enabled", true, "Show the zombie count HUD");
             Mod.HudBackground = Config.Bind("Hud", "Background", false, "Draw a dark plate behind the HUD icon and number");
             Mod.HudFontSize = Config.Bind("Hud", "FontSize", 30, "HUD font size");
@@ -61,12 +70,27 @@ namespace GK2ZombieHQ
             Mod.CaretakerGuard = Config.Bind("Fix", "CaretakerGuard", true, "Suppress the game's caretaker zombie NullReferenceException");
         }
 
-        internal static ZombieLanguage ResolveLanguage(string value)
+        private static string _languageKey;
+        private static float _languageCheckedAt = -100f;
+
+        // Язык надписей. «auto» следует за языком игры — он грузится позже плагина и может
+        // смениться в настройках, поэтому перепроверяем раз в пару секунд (из ZombieHud.Update).
+        internal static void RefreshLanguage(bool force = false)
         {
-            if (string.Equals(value, "en", StringComparison.OrdinalIgnoreCase)) return ZombieLanguage.En;
-            if (string.Equals(value, "ru", StringComparison.OrdinalIgnoreCase)) return ZombieLanguage.Ru;
-            var two = System.Globalization.CultureInfo.CurrentUICulture?.TwoLetterISOLanguageName;
-            return string.Equals(two, "ru", StringComparison.OrdinalIgnoreCase) ? ZombieLanguage.Ru : ZombieLanguage.En;
+            try
+            {
+                float now = Time.unscaledTime;
+                if (!force && now - _languageCheckedAt < 2f) return;
+                _languageCheckedAt = now;
+                string setting = Mod != null && Mod.Language != null ? Mod.Language.Value : "auto";
+                bool auto = string.IsNullOrWhiteSpace(setting) || string.Equals(setting, "auto", StringComparison.OrdinalIgnoreCase);
+                string key = setting + "|" + (auto ? ModLocalization.GameLanguage() : "");
+                if (key == _languageKey) return;
+                _languageKey = key;
+                ModLocalization.Apply(setting);
+                Log?.LogInfo("language: setting=" + setting + " -> " + ZombieText.Code);
+            }
+            catch (Exception ex) { Log?.LogWarning("language: " + ex.Message); }
         }
 
         internal static string Version => typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "1.0.0";

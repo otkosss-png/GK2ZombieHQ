@@ -6,7 +6,7 @@
     <AssemblyName>GK2ZombieHQ</AssemblyName>
     <RootNamespace>GK2ZombieHQ</RootNamespace>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <Version>1.5.1</Version>
+    <Version>1.5.2</Version>
     <GameDir Condition="'$(GameDir)' == ''">E:\SteamLibrary\steamapps\common\Graveyard Keeper 2</GameDir>
     <ManagedDir>$(GameDir)\GraveyardKeeper2_Data\Managed</ManagedDir>
   </PropertyGroup>
@@ -19,6 +19,7 @@
     <Reference Include="GK2.Framework"><HintPath>$(GameDir)\BepInEx\plugins\GK2.Framework.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Assembly-CSharp"><HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="LazyBearTechnology"><HintPath>$(ManagedDir)\LazyBearTechnology.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(ManagedDir)\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FlowCanvas"><HintPath>$(ManagedDir)\FlowCanvas.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="ParadoxNotion"><HintPath>$(ManagedDir)\ParadoxNotion.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Sirenix.Serialization"><HintPath>$(ManagedDir)\Sirenix.Serialization.dll</HintPath><Private>false</Private></Reference>

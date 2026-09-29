@@ -3,14 +3,16 @@ using System.Collections.Generic;
 
 namespace GK2ZombieHQ.Core
 {
+    // Все надписи мода. Встроены en и ru; любой язык (и правки en/ru) приходят из
+    // Localization\<код>.json рядом с DLL (см. ModLocalization). Порядок поиска строки:
+    // файл перевода → встроенный язык → английский. Пустая строка в файле = «не переведено».
     public static class ZombieText
     {
-        public static ZombieLanguage Language { get; set; } = ZombieLanguage.En;
-
         private static readonly Dictionary<string, (string En, string Ru)> Table =
             new Dictionary<string, (string, string)>(StringComparer.Ordinal)
         {
             ["Title"] = ("Zombie HQ", "Зомби-штаб"),
+            ["Zombies"] = ("Zombies", "Зомби"),
             ["Open"] = ("Open", "Открыть"),
             ["Recall"] = ("Recall", "Отозвать"),
             ["Camera"] = ("Camera", "Камера"),
@@ -32,34 +34,60 @@ namespace GK2ZombieHQ.Core
             ["Armor"] = ("Armor", "Броня"),
             ["Empty"] = ("empty", "пусто"),
             ["Carried"] = ("Carried", "Переносимое"),
+            ["kind.Unknown"] = ("Unknown", "Неизвестно"),
+            ["kind.Free"] = ("Free", "Свободный"),
+            ["kind.Crafter"] = ("Crafter", "Ремесленник"),
+            ["kind.Caretaker"] = ("Caretaker", "Смотритель"),
+            ["kind.ConveyorCrafter"] = ("Conveyor crafter", "Конвейерщик"),
+            ["kind.Worker"] = ("Worker", "Рабочий"),
+            ["kind.Porter"] = ("Porter", "Носильщик"),
+            ["kind.Gardener"] = ("Gardener", "Садовник"),
+            ["kind.ConveyorTransporter"] = ("Transporter", "Транспортёр"),
+            ["kind.Fighter"] = ("Fighter", "Боец"),
         };
 
-        private static readonly Dictionary<ZombieKind, (string En, string Ru)> Kinds =
-            new Dictionary<ZombieKind, (string, string)>
+        private static Dictionary<string, string> _overrides = new Dictionary<string, string>(StringComparer.Ordinal);
+        private static bool _ru;
+
+        // Текущий язык (код файла: en, ru, de …).
+        public static string Code { get; private set; } = "en";
+
+        public static IEnumerable<string> Keys => Table.Keys;
+
+        // Выбрать язык: встроенный ru для «ru», иначе английский; overrides — строки из файла перевода.
+        public static void Use(string code, IDictionary<string, string> overrides = null)
         {
-            [ZombieKind.Unknown] = ("Unknown", "Неизвестно"),
-            [ZombieKind.Free] = ("Free", "Свободный"),
-            [ZombieKind.Crafter] = ("Crafter", "Ремесленник"),
-            [ZombieKind.Caretaker] = ("Caretaker", "Смотритель"),
-            [ZombieKind.ConveyorCrafter] = ("Conveyor crafter", "Конвейерщик"),
-            [ZombieKind.Worker] = ("Worker", "Рабочий"),
-            [ZombieKind.Porter] = ("Porter", "Носильщик"),
-            [ZombieKind.Gardener] = ("Gardener", "Садовник"),
-            [ZombieKind.ConveyorTransporter] = ("Transporter", "Транспортёр"),
-            [ZombieKind.Fighter] = ("Fighter", "Боец"),
-        };
+            Code = string.IsNullOrWhiteSpace(code) ? "en" : code.Trim().ToLowerInvariant();
+            _ru = Code == "ru";
+            var map = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (overrides != null)
+                foreach (var pair in overrides)
+                    if (!string.IsNullOrEmpty(pair.Key) && !string.IsNullOrEmpty(pair.Value))
+                        map[pair.Key.Trim()] = pair.Value;
+            _overrides = map;
+        }
+
+        // Шаблон файла перевода: все ключи со встроенными строками языка.
+        public static Dictionary<string, string> Template(string code)
+        {
+            bool ru = string.Equals(code, "ru", StringComparison.OrdinalIgnoreCase);
+            var result = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var pair in Table) result[pair.Key] = ru ? pair.Value.Ru : pair.Value.En;
+            return result;
+        }
 
         public static string Get(string key)
         {
             if (key == null || !Table.TryGetValue(key, out var v))
                 throw new KeyNotFoundException("ZombieText key not found: " + (key ?? "<null>"));
-            return Language == ZombieLanguage.Ru ? v.Ru : v.En;
+            if (_overrides.TryGetValue(key, out var custom)) return custom;
+            return _ru ? v.Ru : v.En;
         }
 
         public static string KindName(ZombieKind kind)
         {
-            if (!Kinds.TryGetValue(kind, out var v)) v = Kinds[ZombieKind.Unknown];
-            return Language == ZombieLanguage.Ru ? v.Ru : v.En;
+            var key = "kind." + kind;
+            return Table.ContainsKey(key) ? Get(key) : Get("kind.Unknown");
         }
 
         // Подпись состояния строки: "лежит на полу" / "без станции" / "в руках" / "нет тела в мире"

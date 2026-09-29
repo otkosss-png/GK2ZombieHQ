@@ -2,10 +2,10 @@ namespace GK2ZombieHQ.Core
 {
     public static class HudFormat
     {
-        public static string Count(ZombieLanguage lang, int count, int limit)
+        public static string Count(int count, int limit)
         {
             if (count < 0) count = 0;
-            var label = lang == ZombieLanguage.Ru ? "Зомби" : "Zombies";
+            var label = ZombieText.Get("Zombies");
             if (limit <= 0) return label + ": " + count;
             return label + ": " + count + " / " + limit;
         }
