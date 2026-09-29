@@ -145,6 +145,9 @@ namespace GK2ZombieHQ
             if (z == null) return ZombieState.OffWorld;
             bool attached = false;
             try { attached = z.AttachedWgoData != null; } catch { }
+            // Колесо (источник энергии) и гарнизон держат зомби на док-точке без привязки к
+            // станции — это тоже работа, а не «без станции».
+            if (!attached) attached = DockParent(z) != null;
             bool inScene = InScene(z);
             bool held = HeldByPlayer(z);
             bool bodyInWorld = !inScene && !held && IsDrop(z) && BodyInWorld(z);
@@ -381,7 +384,7 @@ namespace GK2ZombieHQ
                         {
                             Id = kv.Key.ToString(),
                             Name = LocalizeName(z.Name, kv.Key.ToString()),
-                            Kind = MapKind(z.ZombieType),
+                            Kind = OnWheel(z) ? ZombieKind.Wheel : MapKind(z.ZombieType),
                             WhiteSkulls = z.WhiteSkulls,
                             RedSkulls = z.RedSkulls,
                             PerksUsed = UsedPerks(z),
@@ -624,6 +627,29 @@ namespace GK2ZombieHQ
                 IconId = def != null ? def.iconId : null,
                 Name = SafeItemHeader(item),
             };
+        }
+
+        // Объект, на док-точке которого стоит зомби (колесо, гарнизон), или null.
+        internal static WgoData DockParent(ZombieWgoData z)
+        {
+            try
+            {
+                if (z == null || SGuid.IsNullOrEmpty(z.takenDockPointsParentSGuid)) return null;
+                return MainGame.Instance.GameSave.WorldData.GetWgoData(z.takenDockPointsParentSGuid);
+            }
+            catch { return null; }
+        }
+
+        // Зомби крутит колесо в подвале (PowerSourceInteractionHandler).
+        internal static bool OnWheel(ZombieWgoData z)
+        {
+            try
+            {
+                var parent = DockParent(z);
+                return parent != null && parent.Definition != null
+                    && parent.Definition.interactionType == WGODef.InteractionType.PowerSource;
+            }
+            catch { return false; }
         }
 
         private static ZombieKind MapKind(ZombieType t)

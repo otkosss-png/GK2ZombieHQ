@@ -44,6 +44,7 @@ namespace GK2ZombieHQ.Core
             ["kind.Gardener"] = ("Gardener", "Садовник"),
             ["kind.ConveyorTransporter"] = ("Transporter", "Транспортёр"),
             ["kind.Fighter"] = ("Fighter", "Боец"),
+            ["kind.Wheel"] = ("On the wheel", "На колесе"),
         };
 
         private static Dictionary<string, string> _overrides = new Dictionary<string, string>(StringComparer.Ordinal);
