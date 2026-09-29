@@ -23,7 +23,8 @@ namespace GK2ZombieHQ
 
             if (panel.IsOpen)
             {
-                if (Input.GetKeyDown(KeyCode.Escape)) panel.Close();
+                // В кадр возврата панели (после камеры/окна зомби) то же нажатие Esc её не закрывает.
+                if (Input.GetKeyDown(KeyCode.Escape) && !panel.JustReopened) panel.Close();
                 return false;
             }
 

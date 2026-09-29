@@ -27,6 +27,64 @@ namespace GK2ZombieHQ
 
         internal bool IsOpen => _root != null && _root.activeSelf;
 
+        // «Камера»/«Открыть» уводят из панели; когда игрок выйдет из камеры или закроет окно
+        // зомби — возвращаем панель на ту же прокрутку и ту же кнопку.
+        private enum ReturnFrom { None, Camera, ZombieWindow }
+        private ReturnFrom _returnFrom;
+        private float _savedScroll;
+        private int _savedFocus = -1;
+        private int _reopenedFrame = -1;
+        private float _suspendedAt;
+
+        // Кадр возврата панели: то же нажатие Esc/B, что закрыло камеру/окно, не должно закрыть её.
+        internal bool JustReopened => Time.frameCount == _reopenedFrame;
+
+        private void SuspendFor(ReturnFrom from)
+        {
+            _savedScroll = _scroll != null && _scroll.content != null ? _scroll.content.anchoredPosition.y : 0f;
+            _savedFocus = _focusIdx;
+            _returnFrom = from;
+            _suspendedAt = Time.unscaledTime;
+            Close();
+        }
+
+        // Вернуть панель, когда камера выключена / окно зомби закрыто.
+        private void TryReturn()
+        {
+            if (_returnFrom == ReturnFrom.None || _root == null || _root.activeSelf) return;
+            if (!ZombieRoster.GameReady()) { _returnFrom = ReturnFrom.None; return; }
+            // Окну игры нужен кадр-другой, чтобы открыться: не принимаем «ещё не открылось» за «закрыли».
+            if (Time.unscaledTime - _suspendedAt < 0.5f) return;
+            if (_returnFrom == ReturnFrom.Camera)
+            {
+                var cam = ZombieCameraFollow.Instance;
+                if (cam != null && cam.IsActive) return;
+            }
+            else if (_returnFrom == ReturnFrom.ZombieWindow)
+            {
+                bool shown = false;
+                try { shown = LazyUI.GetWindow<UIZombieWorkerWindow>().IsShown; } catch { }
+                if (shown) return;
+            }
+
+            _returnFrom = ReturnFrom.None;
+            _root.SetActive(true);
+            _focusIdx = _savedFocus;
+            Refresh();
+            SetPaused(true);
+            RestoreScroll(_savedScroll);
+            _reopenedFrame = Time.frameCount;
+        }
+
+        private void RestoreScroll(float y)
+        {
+            if (_scroll == null || _scroll.content == null || _scroll.viewport == null) return;
+            Canvas.ForceUpdateCanvases();
+            var content = _scroll.content;
+            float maxScroll = Mathf.Max(0f, content.rect.height - _scroll.viewport.rect.height);
+            content.anchoredPosition = new Vector2(content.anchoredPosition.x, Mathf.Clamp(y, 0f, maxScroll));
+        }
+
         private void Awake()
         {
             Instance = this;
@@ -234,6 +292,7 @@ namespace GK2ZombieHQ
             if (_root == null) return;
             if (!_root.activeSelf && !ZombieRoster.GameReady()) return; // в меню не открываем
             bool show = !_root.activeSelf;
+            _returnFrom = ReturnFrom.None; // открыли/закрыли вручную — автовозврат больше не нужен
             _root.SetActive(show);
             if (show) { Refresh(); SetPaused(true); }
             else SetPaused(false);
@@ -247,7 +306,8 @@ namespace GK2ZombieHQ
                 // Сейв выгружен (выход в меню) — закрываем панель и снимаем паузу.
                 if (_root.activeSelf && !ZombieRoster.GameReady()) { _root.SetActive(false); SetPaused(false); return; }
                 if (Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey)) Toggle();
-                if (!_root.activeSelf) return;
+                TryReturn();
+                if (!_root.activeSelf || JustReopened) return;
 
                 DriveGamepad();
                 DriveWheel();
@@ -551,10 +611,10 @@ namespace GK2ZombieHQ
                 float right = ButtonRight;
 
                 var openBtn = MakeRowButton(row, "Open", ref right);
-                openBtn.onClick.AddListener(() => { ZombieRoster.OpenWindow(entry); Close(); });
+                openBtn.onClick.AddListener(() => { SuspendFor(ReturnFrom.ZombieWindow); ZombieRoster.OpenWindow(entry); });
 
                 var camBtn = MakeRowButton(row, "Camera", ref right);
-                camBtn.onClick.AddListener(() => { ZombieRoster.FocusCamera(entry); Close(); });
+                camBtn.onClick.AddListener(() => { SuspendFor(ReturnFrom.Camera); ZombieRoster.FocusCamera(entry); });
 
                 if (e.Info.CanRecall)
                 {
