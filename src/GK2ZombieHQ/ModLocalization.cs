@@ -43,6 +43,8 @@ namespace GK2ZombieHQ
             { "settings.Keys.PanelGamepad.description", "Joystick button index (0=A,1=B,2=X,3=Y,6=Back,7=Start); -1 = off" },
             { "settings.Fix.CaretakerGuard.name", "Caretaker crash guard" },
             { "settings.Fix.CaretakerGuard.description", "Suppress the game's caretaker NullReferenceException (otherwise it fires every frame)" },
+            { "settings.Fix.SyncGameCounter.name", "Sync the game's zombie counter" },
+            { "settings.Fix.SyncGameCounter.description", "Write the real number of zombies into the game's counter and recheck the 'too many zombies' debuff (for zombies removed by other mods)" },
         };
 
         private static readonly Dictionary<string, string> SettingsRu = new Dictionary<string, string>
@@ -69,6 +71,8 @@ namespace GK2ZombieHQ
             { "settings.Keys.PanelGamepad.description", "Номер кнопки джойстика (0=A,1=B,2=X,3=Y,6=Back,7=Start); -1 = выкл" },
             { "settings.Fix.CaretakerGuard.name", "Защита от ошибок смотрителя" },
             { "settings.Fix.CaretakerGuard.description", "Глушить игровой NRE у смотрителя с пропавшей целью (иначе игра падает каждый кадр)" },
+            { "settings.Fix.SyncGameCounter.name", "Синхронизировать счётчик игры" },
+            { "settings.Fix.SyncGameCounter.description", "Записывать в счётчик игры реальное число зомби и пересчитывать штраф «слишком много зомби» (если зомби убрал другой мод)" },
         };
 
         internal static string Dir

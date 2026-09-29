@@ -24,6 +24,7 @@ namespace GK2ZombieHQ
         internal ConfigEntry<bool> HudEnabled;
         internal ConfigEntry<bool> HudBackground;
         internal ConfigEntry<bool> CaretakerGuard;
+        internal ConfigEntry<bool> SyncGameCounter;
         internal ConfigEntry<int> HudFontSize, HudOffsetX, HudOffsetY;
         internal ConfigEntry<KeyboardShortcut> HudToggleKey, PanelKey;
         internal ConfigEntry<int> PanelGamepad;
@@ -56,6 +57,8 @@ namespace GK2ZombieHQ
                 "Gamepad: open panel (button #)", "Joystick button index (0=A,1=B,2=X,3=Y,6=Back,7=Start); -1 = off", 1, 30);
             CaretakerGuard = s.AddToggle("Fix", "CaretakerGuard", true,
                 "Caretaker crash guard", "Suppress the game's caretaker NullReferenceException (otherwise it fires every frame)", 10);
+            SyncGameCounter = s.AddToggle("Fix", "SyncGameCounter", false,
+                "Sync the game's zombie counter", "Write the real number of zombies into the game's counter and recheck the 'too many zombies' debuff (for zombies removed by other mods)", 20);
         }
     }
 }

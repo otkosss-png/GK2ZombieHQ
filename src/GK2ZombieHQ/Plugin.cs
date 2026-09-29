@@ -68,6 +68,7 @@ namespace GK2ZombieHQ
             Mod.PanelKey = Config.Bind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8), "Open the zombie panel");
             Mod.PanelGamepad = Config.Bind("Keys", "PanelGamepad", 6, "Gamepad joystick button index to toggle the panel (-1 = off)");
             Mod.CaretakerGuard = Config.Bind("Fix", "CaretakerGuard", true, "Suppress the game's caretaker zombie NullReferenceException");
+            Mod.SyncGameCounter = Config.Bind("Fix", "SyncGameCounter", false, "Write the real number of zombies into the game's counter (cur_zombies_count) and recheck the excessive-zombie debuff");
         }
 
         private static string _languageKey;
