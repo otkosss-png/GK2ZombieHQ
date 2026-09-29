@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using GK2ZombieHQ.Core;
 using LazyBearTechnology;
@@ -422,11 +422,100 @@ namespace GK2ZombieHQ
                 var body = FindBodyDrop(entry.Data);
                 if (body != null)
                     return body.InteractionHandler.Interact();
-                entry.Data.UnAttachFromWgoData(true);
-                MainGame.ZombieSystemData.PutZombieFromGameSceneToStoreForPlayer(pd, entry.Data);
+
+                var z = entry.Data;
+                var station = z.AttachedWgoData;
+                if (station != null) ReleaseFromStation(z, station);
+                ReleaseDockPoint(z);
+
+                // Все штатные «взять» игры возвращают зомби интерактивность. Без этого
+                // зомби со станций шахты/глины/песка/лесопилки (там IsInteractable=false)
+                // потом «застревал» — например, после установки в гарнизон.
+                z.IsInteractable = true;
+                try { z.WorldZoneData?.NotifyWgoDataChanged(); } catch { }
+                MainGame.ZombieSystemData.PutZombieFromGameSceneToStoreForPlayer(pd, z);
                 return true;
             }
             catch (Exception ex) { Plugin.Log.LogWarning("recall: " + ex); return false; }
+        }
+
+        // Как штатное «взять» у станции, к которой привязан зомби (см. Zombie*InteractionHandler).
+        private static void ReleaseFromStation(ZombieWgoData z, WgoData station)
+        {
+            string id = station.id ?? "";
+            if (TryReleaseBuilder(z, station, id)) return;
+
+            if (z.ZombieType == ZombieType.Porter)
+            {
+                // Как PorterStationInteractionHandler: груз носильщика падает рядом с игроком.
+                z.UnAttachFromWgoData(true);
+                return;
+            }
+
+            // Как ZombieInteractionHandler: готовый автокрафт — довести и выгрузить.
+            var craft = station.CraftComponent;
+            if (craft != null && craft.Status == CraftComponentStatus.ReadyToFinishAutoCraft)
+            {
+                craft.ContinueAutoCraft();
+                var items = station.CraftableObjectCraftInventory?.Data?.RemoveAllItems();
+                if (items != null)
+                    foreach (var item in items)
+                        MainGame.Instance.dropSystem.DropItem(item, station.WorldId, station.Position);
+                station.DropStoredTechPoints();
+            }
+            z.UnAttachFromWgoData(true);
+        }
+
+        // Шахта / глина / песок / лесопилка: зомби занимает «точку» стройки и носит предмет.
+        // Повторяем Zombie{Mine,Clay,Sand,Sawmill}InteractionHandler.Interact (ветка «взять»).
+        private static bool TryReleaseBuilder(ZombieWgoData z, WgoData station, string id)
+        {
+            string point, builder, endEvent;
+            Action<WgoData> finish;
+            if (id.Contains("sawmill")) { point = "sawmill_point"; builder = "builder_sawmill"; endEvent = "sawmill_craft_end"; finish = s => GK2.FlowCanvasNodes.Flow_FinishZombieSawmillCraft.FinishCraft(s, false); }
+            else if (id.Contains("mine")) { point = "mine_point"; builder = "builder_mine"; endEvent = "mine_craft_end"; finish = s => GK2.FlowCanvasNodes.Flow_FinishZombieMineCraft.FinishCraft(s, false); }
+            else if (id.Contains("clay")) { point = "clay_point"; builder = "builder_clay_sand"; endEvent = "clay_craft_end"; finish = s => GK2.FlowCanvasNodes.Flow_FinishZombieClayCraft.FinishCraft(s, false); }
+            else if (id.Contains("sand")) { point = "sand_point"; builder = "builder_clay_sand"; endEvent = "sand_craft_end"; finish = s => GK2.FlowCanvasNodes.Flow_FinishZombieSandCraft.FinishCraft(s, false); }
+            else return false;
+
+            if (z.GameResStr.Has(point))
+            {
+                MainGame.WorldData.GetWgoData(builder)?.SetGameRes(z.GameResStr.Get(point), 0);
+                z.GameResStr.Remove(point);
+                z.FireEvent(endEvent);
+            }
+            else if (z.CaretakerPortableItem != null && !z.CaretakerPortableItem.IsEmpty)
+            {
+                finish(station);
+                if (point == "sawmill_point") z.CaretakerPortableItem = Item.Empty;
+            }
+            station.SetGameRes("stuff_disabled", 0);
+            station.CraftComponent?.Clear();
+            z.UnAttachFromWgoData(true);
+            Plugin.Log.LogInfo("recall: released from " + id);
+            return true;
+        }
+
+        // Гарнизон (FightersContainer) и источник энергии держат зомби на док-точке без привязки
+        // к станции — UnAttachFromWgoData там падал (AttachedWgoData == null), и отзыв не работал.
+        // Как ZombieInteractionHandler / PowerSourceInteractionHandler: освобождаем точку.
+        private static void ReleaseDockPoint(ZombieWgoData z)
+        {
+            try
+            {
+                if (SGuid.IsNullOrEmpty(z.takenDockPointsParentSGuid)) return;
+                var parent = MainGame.Instance.GameSave.WorldData.GetWgoData(z.takenDockPointsParentSGuid);
+                var dock = parent?.MainWgoPartData?.GetOccupiedDockPointBy(z.UniqueId);
+                if (dock != null) z.UnOccupyDockPoint(dock);
+                z.takenDockPointsParentSGuid = null;
+                if (parent != null)
+                {
+                    try { GameScene.GetWgoViewGlobal(parent.UniqueId)?.DrawWidgets(); } catch { }
+                    try { parent.WorldZoneData?.NotifyWgoDataChanged(); } catch { }
+                }
+                Plugin.Log.LogInfo("recall: released dock point of " + (parent != null ? parent.id : "?"));
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("recall dock: " + ex.Message); }
         }
 
         // Включаем режим слежения камеры за зомби.
