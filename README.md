@@ -12,12 +12,18 @@ its workstation.
 - **Manager panel** (default `F8`, or a gamepad button): name, type, white/red skulls,
   collar, status per zombie.
 - **Open** - opens the game's own zombie window (organs, talents, equipment).
-- **Recall** - detaches the zombie from its station (game's own flow) and moves it to store.
+- **Recall** - takes the zombie off whatever it is doing exactly like the game's own "take"
+  (stations, mine/sawmill/clay/sand with carried items, porter, the basement wheel, the
+  garrison) and moves it to store. Zombies on the wheel show as "On the wheel".
 - **Camera follow** - locks the camera to a zombie and follows it; Esc restores your camera.
 - **Gamepad support** - D-pad / left stick to move, A = select, B = close; the game pauses
   while the panel is open; long lists scroll (wheel, gamepad or drag).
-- **Settings** in the in-game **Mods** menu: language (en/ru/auto), HUD on/off, font size,
-  offsets, hotkeys, gamepad button.
+- **Settings** in the in-game **Mods** menu: language (auto = game language / en / ru / any
+  file you add), HUD on/off, font size, offsets, hotkeys, gamepad button.
+- **Translations** (1.5.2): all texts live in `BepInEx\plugins\GK2ZombieHQ\Localization\<lang>.json`
+  (`en.json`/`ru.json` are written on first launch and never overwritten). Copy `en.json` to e.g.
+  `de.json`, translate the values, restart and pick `de`. Missing lines fall back to English;
+  `settings.*`/`mod.*` keys translate the Mods settings screen.
 
 ## Requirements
 
