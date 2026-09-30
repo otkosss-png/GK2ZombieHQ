@@ -663,6 +663,9 @@ namespace GK2ZombieHQ
                     icon = info.Icon;
                 }
                 catch { work.StationName = LLBase.L(station.id); }
+                // Снимок модели станции (если она сейчас в сцене), иначе — иконка из меню игры.
+                var snap = StationSnapshot.Get(station);
+                if (snap != null) icon = snap;
                 var type = station.Definition != null ? station.Definition.interactionType : WGODef.InteractionType.None;
                 work.Passive = type == WGODef.InteractionType.PowerSource || type == WGODef.InteractionType.FighterContainer;
             }
