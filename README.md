@@ -10,7 +10,8 @@ its workstation.
   1.5.4): zombie icon + the current number of zombies (only zombies actually in the world are counted). Hidden in the main menu and during
   cutscenes/loading, matching the game's own HUD.
 - **Manager panel** (default `F8`, or a gamepad button): name, type, white/red skulls,
-  collar, status per zombie.
+  gear, status per zombie; for working zombies the station (icon + name) and the current job -
+  the craft with its output icon and progress, or the action, with problems in red (1.5.5).
 - **Open** - opens the game's own zombie window (organs, talents, equipment).
 - **Recall** - takes the zombie off whatever it is doing exactly like the game's own "take"
   (stations, mine/sawmill/clay/sand with carried items, porter, the basement wheel, the
