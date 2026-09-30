@@ -9,6 +9,8 @@ namespace GK2ZombieHQ
     {
         public ZombieInfo Info;
         public ZombieWgoData Data;
+        // Иконка станции — та же, что игра показывает в окне информации об объекте.
+        public UnityEngine.Sprite StationIcon;
     }
 
     internal static class ZombieRoster
@@ -377,11 +379,18 @@ namespace GK2ZombieHQ
                     // Их количество всё равно видно в заголовке панели ("всего M").
                     if (state == ZombieState.OffWorld) continue;
 
+                    UnityEngine.Sprite stationIcon = null;
+                    var gear = BuildGear(z);
+                    var work = state == ZombieState.Working ? BuildStation(z, out stationIcon) : null;
+                    if (work != null) FillJob(z, work, gear);
+
                     result.Add(new RosterEntry
                     {
                         Data = z,
+                        StationIcon = stationIcon,
                         Info = new ZombieInfo
                         {
+                            Work = work,
                             Id = kv.Key.ToString(),
                             Name = LocalizeName(z.Name, kv.Key.ToString()),
                             Kind = OnWheel(z) ? ZombieKind.Wheel : MapKind(z.ZombieType),
@@ -391,7 +400,7 @@ namespace GK2ZombieHQ
                             TechBlue = z.techBlue,
                             TechGreen = z.techGreen,
                             TechRed = z.techRed,
-                            Gear = BuildGear(z),
+                            Gear = gear,
                             Activity = z.WorkerActivity != null ? z.WorkerActivity.ToString() : null,
                             State = state,
                             // "Отозвать" (в переноску) осмысленно только для тех, у кого есть тело в мире
@@ -630,6 +639,89 @@ namespace GK2ZombieHQ
         }
 
         // Объект, на док-точке которого стоит зомби (колесо, гарнизон), или null.
+        // Станция зомби: прикреплённый объект или док-точка (колесо, гарнизон).
+        internal static WgoData StationOf(ZombieWgoData z)
+        {
+            WgoData station = null;
+            try { station = z.AttachedWgoData; } catch { }
+            return station ?? DockParent(z);
+        }
+
+        // Название и иконка станции — как в игровом окне информации об объекте (UIInfoWidgetData).
+        private static WorkInfo BuildStation(ZombieWgoData z, out UnityEngine.Sprite icon)
+        {
+            icon = null;
+            var work = new WorkInfo();
+            try
+            {
+                var station = StationOf(z);
+                if (station == null) return work;
+                try
+                {
+                    var info = new UIInfoWidgetData(station);
+                    work.StationName = info.Header;
+                    icon = info.Icon;
+                }
+                catch { work.StationName = LLBase.L(station.id); }
+                var type = station.Definition != null ? station.Definition.interactionType : WGODef.InteractionType.None;
+                work.Passive = type == WGODef.InteractionType.PowerSource || type == WGODef.InteractionType.FighterContainer;
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("roster station: " + ex.Message); }
+            return work;
+        }
+
+        // Что зомби делает прямо сейчас: действие по его состоянию, крафт станции, помехи.
+        // Вызывается при построении панели и раз в секунду для открытой панели.
+        internal static void FillJob(ZombieWgoData z, WorkInfo work, List<GearIcon> gear)
+        {
+            if (z == null || work == null || work.Passive) return;
+            work.Task = null; work.Problem = null; work.CraftName = null;
+            work.OutputId = null; work.OutputIconId = null; work.OutputCount = 0; work.Progress = -1f;
+            try
+            {
+                switch (z.ZombieType)
+                {
+                    case ZombieType.Gardener: work.Task = WorkLogic.TaskKey(z.GardenerState.ToString()); break;
+                    case ZombieType.Caretaker: work.Task = WorkLogic.TaskKey(z.CaretakerState.ToString()); break;
+                    case ZombieType.ConveyorTransporter: work.Task = WorkLogic.TaskKey(z.ConveyorTransporterState.ToString()); break;
+                    case ZombieType.Porter:
+                        if (gear != null && gear.Count > GearLogic.EquipSlotCount) work.Task = "job.Carrying";
+                        break;
+                }
+            }
+            catch { }
+
+            try
+            {
+                var station = StationOf(z);
+                var craft = station != null ? station.CraftComponent : null;
+                if (craft == null) return;
+                work.Problem = WorkLogic.StationProblemKey(craft.Status.ToString());
+                var el = craft.CurrentCraftElement;
+                if (el == null || el.Def == null) return;
+
+                OutputPreview output = null;
+                try { output = el.Def.GetOutputPreview(station); } catch { }
+                string craftId = el.Def.id;
+                string name = LLBase.L(craftId);
+                if (output != null && !string.IsNullOrEmpty(output.itemId))
+                {
+                    work.OutputId = output.itemId;
+                    work.OutputIconId = output.IconId;
+                    work.OutputCount = output.count;
+                    if (string.IsNullOrEmpty(name) || name == craftId)
+                    {
+                        var def = GameBalance.Me.GetDataOrNull<ItemDef>(output.itemId);
+                        if (def != null) name = def.GetHeader();
+                    }
+                }
+                work.CraftName = name;
+                work.Progress = el.IsStarted ? el.ProgressTimeNormalized : 0f;
+                work.Problem = WorkLogic.ProblemKey(el.CraftStatus.ToString()) ?? work.Problem;
+            }
+            catch (Exception ex) { Plugin.Log.LogWarning("roster job: " + ex.Message); }
+        }
+
         internal static WgoData DockParent(ZombieWgoData z)
         {
             try

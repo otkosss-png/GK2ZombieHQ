@@ -15,6 +15,8 @@ namespace GK2ZombieHQ.Core
         public int TechGreen;
         public int TechRed;
         public string Activity;
+        // Место работы и текущее занятие (только у работающих; иначе null).
+        public WorkInfo Work;
         public string Zone;
         public ZombieState State;
         public bool CanRecall;

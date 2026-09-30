@@ -311,6 +311,7 @@ namespace GK2ZombieHQ
 
                 DriveGamepad();
                 DriveWheel();
+                UpdateWorkRows();
             }
             catch (Exception ex) { Plugin.Log.LogWarning("panel: " + ex.Message); }
         }
@@ -505,6 +506,86 @@ namespace GK2ZombieHQ
             }
         }
 
+        // Строка работы: [иконка станции] Станция   [иконка предмета] Доски ×2 · 45%.
+        // Занятие обновляется раз в секунду, пока панель открыта (UpdateWorkRows).
+        private const float WorkIconSize = 30f;
+        private const float StationX = TitleX, StationNameWidth = 240f;
+        private const float JobX = 310f, JobWidth = 290f;
+
+        private sealed class WorkRow
+        {
+            public RosterEntry Entry;
+            public TextMeshProUGUI Job;
+            public Image JobIcon;
+            public RectTransform JobBox;
+            public string IconKey;
+        }
+
+        private readonly List<WorkRow> _workRows = new List<WorkRow>();
+        private float _workTimer;
+
+        private void MakeWorkLine(RectTransform row, RosterEntry e)
+        {
+            var work = e.Info.Work;
+            float x = StationX;
+            if (e.StationIcon != null)
+            {
+                var iconRt = LeftRect("StationIcon", row, x, SecondLineY, WorkIconSize, WorkIconSize);
+                var img = iconRt.gameObject.AddComponent<Image>();
+                img.sprite = e.StationIcon;
+                img.preserveAspect = true;
+                img.raycastTarget = false;
+                x += WorkIconSize + 6f;
+            }
+            if (!string.IsNullOrEmpty(work.StationName))
+                LeftLabel("Station", row, work.StationName, 22, x, SecondLineY, StationX + StationNameWidth + WorkIconSize - x, 28, GameStyle.Accent);
+
+            if (work.Passive) return;
+            var jobIconRt = LeftRect("JobIcon", row, JobX, SecondLineY, WorkIconSize, WorkIconSize);
+            var jobIcon = jobIconRt.gameObject.AddComponent<Image>();
+            jobIcon.preserveAspect = true;
+            jobIcon.raycastTarget = false;
+            var job = LeftLabel("Job", row, "", 22, JobX, SecondLineY, JobWidth, 28, GameStyle.Text);
+            var wr = new WorkRow { Entry = e, Job = job, JobIcon = jobIcon, JobBox = (RectTransform)job.transform.parent };
+            ApplyWork(wr);
+            _workRows.Add(wr);
+        }
+
+        // Иконка предмета на выходе (если есть) и текст занятия; без иконки текст сдвигается влево.
+        private static void ApplyWork(WorkRow wr)
+        {
+            var work = wr.Entry.Info.Work;
+            string key = work.OutputId + "|" + work.OutputIconId;
+            if (key != wr.IconKey)
+            {
+                wr.IconKey = key;
+                var sprite = string.IsNullOrEmpty(work.OutputId) ? null : GameStyle.ItemSprite(work.OutputId, work.OutputIconId);
+                wr.JobIcon.sprite = sprite;
+                wr.JobIcon.gameObject.SetActive(sprite != null);
+                if (sprite != null) GameStyle.ApplyItemIconMaterial(wr.JobIcon);
+                float textX = sprite != null ? JobX + WorkIconSize + 6f : JobX;
+                wr.JobBox.anchoredPosition = new Vector2(textX, SecondLineY);
+                wr.JobBox.sizeDelta = new Vector2(JobX + JobWidth - textX, wr.JobBox.sizeDelta.y);
+            }
+            var text = WorkLogic.Job(work) ?? string.Empty;
+            if (wr.Job.text != text) wr.Job.text = text;
+            wr.Job.color = string.IsNullOrEmpty(work.Problem) ? GameStyle.Text : GameStyle.Danger;
+        }
+
+        private void UpdateWorkRows()
+        {
+            if (_workRows.Count == 0) return;
+            _workTimer -= Time.unscaledDeltaTime;
+            if (_workTimer > 0f) return;
+            _workTimer = 1f;
+            foreach (var wr in _workRows)
+            {
+                if (wr.Job == null) continue;
+                ZombieRoster.FillJob(wr.Entry.Data, wr.Entry.Info.Work, wr.Entry.Info.Gear);
+                ApplyWork(wr);
+            }
+        }
+
         // Подсказка по наведению: пишем текст в строку-подсказку панели.
         private TextMeshProUGUI _gearTip;
 
@@ -561,6 +642,7 @@ namespace GK2ZombieHQ
             GameStyle.RefreshButtonSprite();
             UiFactory.ApplyButtonSprite(_closeButton);
             foreach (Transform child in _content) Destroy(child.gameObject);
+            _workRows.Clear();
             _focusables.Clear();
             _baseColors.Clear();
             _frames.Clear();
@@ -590,10 +672,15 @@ namespace GK2ZombieHQ
                 LeftLabel("Name", row, RosterLogic.RowTitle(number, e.Info.Name, ZombieText.KindName(e.Info.Kind)),
                     30, TitleX, MainLineY, TitleWidth, 44);
 
-                // Состояние ("в хоре" / "лежит на полу") — второй строкой под именем.
-                var statusText = ZombieText.StatusName(e.Info.State);
-                if (!string.IsNullOrEmpty(statusText))
-                    LeftLabel("Status", row, statusText, 22, TitleX, SecondLineY, TitleWidth, 28, GameStyle.Accent);
+                // Второй строкой под именем: у работающих — станция и занятие,
+                // у остальных — состояние ("в хоре" / "лежит на полу").
+                if (e.Info.Work != null) MakeWorkLine(row, e);
+                else
+                {
+                    var statusText = ZombieText.StatusName(e.Info.State);
+                    if (!string.IsNullOrEmpty(statusText))
+                        LeftLabel("Status", row, statusText, 22, TitleX, SecondLineY, TitleWidth, 28, GameStyle.Accent);
+                }
 
                 MakeSkull(row, WhiteX, WhiteWidth, "skull", e.Info.WhiteSkulls.ToString());
                 MakeSkull(row, RedX, RedWidth, "rskull", RosterLogic.RedSkulls(e.Info));

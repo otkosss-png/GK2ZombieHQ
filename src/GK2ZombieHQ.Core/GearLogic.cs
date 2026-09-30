@@ -33,6 +33,9 @@ namespace GK2ZombieHQ.Core
         // инвентарь станции (рабочие материалы вроде урожая), которые к «снаряжению» не относятся.
         public static bool ShowCarried(ZombieKind kind) => kind == ZombieKind.Porter;
 
+        // Первые слоты Build — снаряжение (ошейник/инструмент/броня), дальше — переносимое.
+        public const int EquipSlotCount = 3;
+
         public static List<GearIcon> Build(
             IList<GearIcon> gear, IList<GearIcon> carried, int maxCarried)
         {
