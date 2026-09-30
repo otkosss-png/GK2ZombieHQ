@@ -10,6 +10,9 @@ namespace GK2ZombieHQ
         private TextMeshProUGUI _text;
         private Image _icon;
         private GameObject _canvasGo;
+        private RectTransform _plate;
+        private Image _plateImage;
+        private HudDragHandler _drag;
         private float _timer;
         private bool _visible = true;
 
@@ -116,6 +119,9 @@ namespace GK2ZombieHQ
             drag.CanvasRect = (RectTransform)_canvasGo.transform;
             drag.Target = brt;
             drag.Panel = GetComponent<ZombiePanel>();
+            _plate = brt;
+            _plateImage = bgImage;
+            _drag = drag;
 
             _visible = Plugin.Mod.HudEnabled.Value;
             _canvasGo.SetActive(_visible);
@@ -146,6 +152,7 @@ namespace GK2ZombieHQ
                 if (_canvasGo.activeSelf != show) _canvasGo.SetActive(show);
                 if (!show || _text == null) return;
 
+                ApplySettings();
                 EnsureGlyph();
                 string body = HudFormat.CountShort(count, limit);
                 if (_glyphAsset != null && !string.IsNullOrEmpty(_glyphName))
@@ -166,6 +173,27 @@ namespace GK2ZombieHQ
                 _text.color = HudFormat.OverLimit(count, limit) ? GameStyle.Danger : _normalColor;
             }
             catch (System.Exception ex) { Plugin.Log.LogWarning("hud: " + ex.Message); }
+        }
+
+        // Отступы X/Y, размер шрифта и фон из меню Mods применяются сразу, без перезапуска
+        // (раньше читались один раз при создании HUD — ползунки X/Y ничего не двигали).
+        private void ApplySettings()
+        {
+            var mod = Plugin.Mod;
+            if (mod == null) return;
+            if (_plate != null && (_drag == null || !_drag.Dragging))
+            {
+                var pos = new Vector2(mod.HudOffsetX.Value, -mod.HudOffsetY.Value);
+                if (_plate.anchoredPosition != pos) _plate.anchoredPosition = pos;
+            }
+            if (_text != null && !Mathf.Approximately(_text.fontSize, mod.HudFontSize.Value))
+                _text.fontSize = mod.HudFontSize.Value;
+            if (_plateImage != null)
+            {
+                bool bg = mod.HudBackground != null && mod.HudBackground.Value;
+                var color = bg ? new Color(0f, 0f, 0f, 0.5f) : new Color(0f, 0f, 0f, 0f);
+                if (_plateImage.color != color) _plateImage.color = color;
+            }
         }
 
         // Копируем стиль с игрового лейбла "лайков"; размер оставляем из настройки мода.

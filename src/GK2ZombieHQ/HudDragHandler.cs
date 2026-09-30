@@ -13,9 +13,13 @@ namespace GK2ZombieHQ
 
         private bool _dragged;
 
+        // Пока тянем мышью, HUD не подтягивает позицию из настроек (иначе плашку дёргало бы назад).
+        internal bool Dragging { get; private set; }
+
         public void OnBeginDrag(PointerEventData eventData)
         {
             _dragged = false;
+            Dragging = true;
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -39,6 +43,7 @@ namespace GK2ZombieHQ
         public void OnEndDrag(PointerEventData eventData)
         {
             Save();
+            Dragging = false;
         }
 
         public void OnPointerClick(PointerEventData eventData)
