@@ -6,8 +6,8 @@ its workstation.
 
 ## Features
 
-- **Count HUD** (bottom-left, draggable): zombie icon + the current number of zombies
-  (only zombies actually in the world are counted). Hidden in the main menu and during
+- **Count HUD** (draggable, or move it with the X/Y offset sliders - applied instantly since
+  1.5.4): zombie icon + the current number of zombies (only zombies actually in the world are counted). Hidden in the main menu and during
   cutscenes/loading, matching the game's own HUD.
 - **Manager panel** (default `F8`, or a gamepad button): name, type, white/red skulls,
   collar, status per zombie.
