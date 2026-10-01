@@ -17,6 +17,7 @@ namespace GK2ZombieHQ
         private TextMeshProUGUI _countLabel;
         private ScrollRect _scroll;
         private Button _closeButton;
+        private TextMeshProUGUI _titleLabel;
 
         // Геймпад: свой список фокусируемых кнопок (legacy Input надёжнее GameKey-API).
         private readonly List<Button> _focusables = new List<Button>();
@@ -161,6 +162,7 @@ namespace GK2ZombieHQ
             prt.offsetMax = Vector2.zero;
 
             var title = UiFactory.Label("Title", prt, ZombieText.Get("Title"), 52, TextAlignmentOptions.Left, GameStyle.Accent);
+            _titleLabel = title;
             var trt = title.rectTransform;
             trt.anchorMin = new Vector2(0, 1); trt.anchorMax = new Vector2(1, 1);
             trt.pivot = new Vector2(0.5f, 1); trt.anchoredPosition = new Vector2(24, -16);
@@ -641,6 +643,10 @@ namespace GK2ZombieHQ
         {
             GameStyle.RefreshButtonSprite();
             UiFactory.ApplyButtonSprite(_closeButton);
+            // Заголовок и «Закрыть» создаются один раз — подпись обновляем на текущий язык.
+            if (_titleLabel != null) _titleLabel.text = ZombieText.Get("Title");
+            var closeLabel = _closeButton != null ? _closeButton.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+            if (closeLabel != null) closeLabel.text = ZombieText.Get("Close");
             foreach (Transform child in _content) Destroy(child.gameObject);
             _workRows.Clear();
             _focusables.Clear();
