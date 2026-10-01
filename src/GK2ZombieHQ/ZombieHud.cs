@@ -102,6 +102,7 @@ namespace GK2ZombieHQ
             var textGo = new GameObject("Count", typeof(RectTransform));
             textGo.transform.SetParent(bg.transform, false);
             _text = textGo.AddComponent<TextMeshProUGUI>();
+            FontFitter.Attach(_text);
             if (GameStyle.Font != null) _text.font = GameStyle.Font;
             if (GameStyle.FontMaterial != null) _text.fontSharedMaterial = GameStyle.FontMaterial;
             _text.fontSize = Plugin.Mod.HudFontSize.Value;

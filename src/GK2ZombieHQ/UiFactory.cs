@@ -38,6 +38,7 @@ namespace GK2ZombieHQ
             t.alignment = align;
             t.color = color ?? GameStyle.Text;
             t.raycastTarget = false;
+            FontFitter.Attach(t); // перевод может требовать другой шрифт (CJK)
             return t;
         }
 
