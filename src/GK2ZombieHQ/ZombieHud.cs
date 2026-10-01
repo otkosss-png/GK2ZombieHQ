@@ -145,10 +145,13 @@ namespace GK2ZombieHQ
                 if (_timer > 0f) return;
                 _timer = 0.5f;
 
-                int count = ZombieRoster.CountInWorld();
-                int limit = ZombieRoster.Limit();
+                // Вне игры (меню, загрузка) данные мира не трогаем: подсчёт качества зоны там падал
+                // и заодно заставлял игру искать BuildController («Cannot find instance…» в логе).
+                bool ready = ZombieRoster.GameReady();
+                int count = ready ? ZombieRoster.CountInWorld() : -1;
+                int limit = ready ? ZombieRoster.Limit() : -1;
 
-                bool gameActive = count >= 0 && ZombieRoster.GameReady() && ZombieRoster.GameHudVisible();
+                bool gameActive = count >= 0 && ready && ZombieRoster.GameHudVisible();
                 bool show = gameActive && _visible;
                 if (_canvasGo.activeSelf != show) _canvasGo.SetActive(show);
                 if (!show || _text == null) return;

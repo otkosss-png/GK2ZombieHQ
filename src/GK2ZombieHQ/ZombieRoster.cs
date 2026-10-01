@@ -112,17 +112,29 @@ namespace GK2ZombieHQ
 
         // Лимит зомби от игры: качество зоны воскрешения — столько зомби можно держать,
         // дальше игра вешает дебафф debuff_excessive_zombie. -1 = лимита нет/неизвестен.
+        private static float _limitWarnedAt = -1000f;
+
         internal static int Limit()
         {
             try
             {
+                if (!GameReady()) return -1;
                 var world = MainGame.WorldData;
                 if (world == null) return -1;
                 var zone = world.GetWorldZoneDataById("resurrection");
-                if (zone == null) return -1;
+                if (zone == null || zone.Definition == null) return -1;
                 return HudFormat.LimitOf(zone.GetTotalQuality());
             }
-            catch (Exception ex) { Plugin.Log.LogWarning("zombie limit: " + ex.Message); return -1; }
+            catch (Exception ex)
+            {
+                // Бывает в момент загрузки/выхода из сейва — пишем не чаще раза в минуту.
+                if (UnityEngine.Time.unscaledTime - _limitWarnedAt > 60f)
+                {
+                    _limitWarnedAt = UnityEngine.Time.unscaledTime;
+                    Plugin.Log.LogWarning("zombie limit: " + ex.Message);
+                }
+                return -1;
+            }
         }
 
 
