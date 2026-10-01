@@ -15,7 +15,7 @@ namespace GK2ZombieHQ
             "otkosss.gk2.zombiehq",
             "GK2 Zombie HQ",
             "otkosss",
-            "1.5.5",
+            "1.5.6",
             "Zombie count HUD and a manager panel: list every zombie (including ones lying on the floor), show the total in the save, open the game's zombie window, recall from work, and guard against the game's caretaker-zombie crash.",
             false,
             false);
