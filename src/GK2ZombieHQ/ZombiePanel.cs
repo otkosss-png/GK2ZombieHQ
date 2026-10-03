@@ -307,7 +307,8 @@ namespace GK2ZombieHQ
                 if (_root == null) return;
                 // Сейв выгружен (выход в меню) — закрываем панель и снимаем паузу.
                 if (_root.activeSelf && !ZombieRoster.GameReady()) { _root.SetActive(false); SetPaused(false); return; }
-                if (Input.GetKeyDown(Plugin.Mod.PanelKey.Value.MainKey)) Toggle();
+                // IsDown учитывает модификаторы: «Ctrl+F8» не должен срабатывать от простого F8.
+                if (Plugin.Mod.PanelKey.Value.IsDown()) Toggle();
                 TryReturn();
                 if (!_root.activeSelf || JustReopened) return;
 

@@ -135,7 +135,7 @@ namespace GK2ZombieHQ
                 Plugin.RefreshLanguage();
                 GameCounterSync.Tick();
                 if (_canvasGo == null) return;
-                if (Input.GetKeyDown(Plugin.Mod.HudToggleKey.Value.MainKey))
+                if (Plugin.Mod.HudToggleKey.Value.IsDown())
                 {
                     _visible = !_visible;
                     _timer = 0f;

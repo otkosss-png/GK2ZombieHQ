@@ -15,7 +15,7 @@ namespace GK2ZombieHQ
             "otkosss.gk2.zombiehq",
             "GK2 Zombie HQ",
             "otkosss",
-            "1.5.7",
+            "1.5.8",
             "Zombie count HUD and a manager panel: list every zombie (including ones lying on the floor), show the total in the save, open the game's zombie window, recall from work, and guard against the game's caretaker-zombie crash.",
             false,
             false);
@@ -53,7 +53,7 @@ namespace GK2ZombieHQ
                 "HUD key", "Hide/show the counter", 10);
             PanelKey = s.AddKeybind("Keys", "Panel", new KeyboardShortcut(KeyCode.F8),
                 "Panel key", "Open Zombie HQ", 20);
-            PanelGamepad = s.AddIntSlider("Keys", "PanelGamepad", 6, -1, 19,
+            PanelGamepad = s.AddIntSlider("Keys", "PanelGamepad", 9, -1, 19,
                 "Gamepad: open panel (button #)", "Joystick button index (0=A,1=B,2=X,3=Y,6=Back,7=Start); -1 = off", 1, 30);
             CaretakerGuard = s.AddToggle("Fix", "CaretakerGuard", true,
                 "Caretaker crash guard", "Suppress the game's caretaker NullReferenceException (otherwise it fires every frame)", 10);
