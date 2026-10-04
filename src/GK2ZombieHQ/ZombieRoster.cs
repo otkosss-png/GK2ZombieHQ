@@ -601,6 +601,7 @@ namespace GK2ZombieHQ
                 {
                     GearItem(GearSlot.Collar, z.Collar),
                     GearItem(GearSlot.Tool, z.Hand),
+                    GearItem(GearSlot.Weapon, WeaponOf(z)),
                     GearItem(GearSlot.Armor, z.Armor),
                 };
 
@@ -635,6 +636,17 @@ namespace GK2ZombieHQ
                 Plugin.Log.LogWarning("gear: " + ex.Message);
                 return GearLogic.Build(null, null, 0);
             }
+        }
+
+        // Слот оружия (ZombieWgoData.Weapon) есть только в игре от 02.10.2026 — берём отражением,
+        // чтобы на старой версии игры мод не падал (там оружие лежит в слоте инструмента).
+        private static readonly System.Reflection.PropertyInfo WeaponProp =
+            typeof(ZombieWgoData).GetProperty("Weapon", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+
+        private static Item WeaponOf(ZombieWgoData z)
+        {
+            try { return WeaponProp != null ? WeaponProp.GetValue(z, null) as Item : null; }
+            catch { return null; }
         }
 
         private static GearIcon GearItem(GearSlot slot, Item item)

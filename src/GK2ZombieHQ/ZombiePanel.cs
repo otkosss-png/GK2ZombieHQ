@@ -413,7 +413,8 @@ namespace GK2ZombieHQ
         private const float WhiteX = 425f, WhiteWidth = 85f;
         private const float RedX = 510f, RedWidth = 120f;
         private const float GearX = 635f;
-        private const float TechX = 845f, TechWidth = 240f;
+        // Четыре значка снаряжения (635 + 4 × 64) — очки сразу за ними.
+        private const float TechX = 909f, TechWidth = 220f;
         private const float ButtonWidth = 180f, ButtonHeight = 60f, ButtonGap = 10f, ButtonRight = 16f;
 
         // Прямоугольник, привязанный к левому краю строки по центру по вертикали.
@@ -462,10 +463,10 @@ namespace GK2ZombieHQ
             label.text = (sa != null ? "<sprite name=\"" + glyph + "\"> " : "") + value;
         }
 
-        // Снаряжение: ошейник/инструмент/броня (пустые — тусклая заглушка) на основной строке,
+        // Снаряжение: ошейник/инструмент/оружие/броня (пустые — тусклая заглушка) на основной строке,
         // переносимые вещи носильщика — мельче, второй строкой. Наведение на значок
         // показывает название в подсказке панели.
-        private const int EquipSlots = 3;
+        private const int EquipSlots = GearLogic.EquipSlotCount;
         // Значки снаряжения — высотой с кнопки строки.
         private const float GearIconSize = ButtonHeight, GearIconStep = ButtonHeight + 4f;
         private const float CarriedIconSize = 24f, CarriedIconStep = 28f;

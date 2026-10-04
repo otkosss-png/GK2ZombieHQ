@@ -32,6 +32,7 @@ namespace GK2ZombieHQ.Core
             ["Collar"] = ("Collar", "Ошейник"),
             ["Tool"] = ("Tool", "Инструмент"),
             ["Armor"] = ("Armor", "Броня"),
+            ["Weapon"] = ("Weapon", "Оружие"),
             ["Empty"] = ("empty", "пусто"),
             ["Carried"] = ("Carried", "Переносимое"),
             ["job.Idle"] = ("waiting for work", "ждёт работы"),
@@ -127,6 +128,7 @@ namespace GK2ZombieHQ.Core
                 case GearSlot.Collar: return Get("Collar");
                 case GearSlot.Tool: return Get("Tool");
                 case GearSlot.Armor: return Get("Armor");
+                case GearSlot.Weapon: return Get("Weapon");
                 default: return Get("Carried");
             }
         }

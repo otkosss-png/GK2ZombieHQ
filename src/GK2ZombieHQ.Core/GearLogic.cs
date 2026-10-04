@@ -8,6 +8,8 @@ namespace GK2ZombieHQ.Core
         Collar = 1,
         Tool = 2,
         Armor = 3,
+        // Отдельный слот оружия появился в игре 02.10.2026 (ZombieWgoData.equippedWeapon).
+        Weapon = 4,
     }
 
     // Значок в строке снаряжения: слот экипировки либо переносимый предмет.
@@ -33,15 +35,17 @@ namespace GK2ZombieHQ.Core
         // инвентарь станции (рабочие материалы вроде урожая), которые к «снаряжению» не относятся.
         public static bool ShowCarried(ZombieKind kind) => kind == ZombieKind.Porter;
 
-        // Первые слоты Build — снаряжение (ошейник/инструмент/броня), дальше — переносимое.
-        public const int EquipSlotCount = 3;
+        // Первые слоты Build — снаряжение (ошейник/инструмент/оружие/броня), дальше — переносимое.
+        public const int EquipSlotCount = 4;
+
+        private static readonly GearSlot[] EquipOrder = { GearSlot.Collar, GearSlot.Tool, GearSlot.Weapon, GearSlot.Armor };
 
         public static List<GearIcon> Build(
             IList<GearIcon> gear, IList<GearIcon> carried, int maxCarried)
         {
             var result = new List<GearIcon>();
 
-            foreach (var slot in new[] { GearSlot.Collar, GearSlot.Tool, GearSlot.Armor })
+            foreach (var slot in EquipOrder)
             {
                 GearIcon found = null;
                 if (gear != null)

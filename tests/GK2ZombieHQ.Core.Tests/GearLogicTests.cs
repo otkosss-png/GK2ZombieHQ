@@ -22,13 +22,15 @@ namespace GK2ZombieHQ.Core.Tests
             var gear = new List<GearIcon> { Gear(GearSlot.Armor, "armor_a"), Gear(GearSlot.Collar, "collar_a") };
             var row = GearLogic.Build(gear, null, 6);
 
-            Assert.Equal(3, row.Count);
+            Assert.Equal(4, row.Count);
             Assert.Equal(GearSlot.Collar, row[0].Slot);
             Assert.Equal("collar_a", row[0].Id);
             Assert.Equal(GearSlot.Tool, row[1].Slot);
             Assert.True(row[1].IsEmpty);
-            Assert.Equal(GearSlot.Armor, row[2].Slot);
-            Assert.Equal("armor_a", row[2].Id);
+            Assert.Equal(GearSlot.Weapon, row[2].Slot);
+            Assert.True(row[2].IsEmpty);
+            Assert.Equal(GearSlot.Armor, row[3].Slot);
+            Assert.Equal("armor_a", row[3].Id);
         }
 
         [Fact]
@@ -46,7 +48,7 @@ namespace GK2ZombieHQ.Core.Tests
             Assert.NotNull(injections);
             Assert.Equal(3, injections.Count);
             Assert.Equal(1, row.FindAll(x => x.Id == "injection").Count);
-            Assert.Equal(3 + 2, row.Count);
+            Assert.Equal(GearLogic.EquipSlotCount + 2, row.Count);
         }
 
         [Fact]
@@ -56,7 +58,7 @@ namespace GK2ZombieHQ.Core.Tests
             for (int i = 0; i < 10; i++) carried.Add(new GearIcon { Id = "item" + i, Name = "item" + i });
             var row = GearLogic.Build(null, carried, 4);
 
-            Assert.Equal(3 + 4, row.Count);
+            Assert.Equal(GearLogic.EquipSlotCount + 4, row.Count);
             Assert.Equal("item3", row[row.Count - 1].Id);
         }
 
@@ -66,9 +68,9 @@ namespace GK2ZombieHQ.Core.Tests
             var carried = new List<GearIcon> { null, new GearIcon(), new GearIcon { Id = "ok" } };
             var row = GearLogic.Build(new List<GearIcon> { null }, carried, 6);
 
-            Assert.Equal(4, row.Count);
-            Assert.Equal("ok", row[3].Id);
-            Assert.Equal(1, row[3].Count);
+            Assert.Equal(GearLogic.EquipSlotCount + 1, row.Count);
+            Assert.Equal("ok", row[GearLogic.EquipSlotCount].Id);
+            Assert.Equal(1, row[GearLogic.EquipSlotCount].Count);
         }
 
         [Fact]
@@ -85,11 +87,21 @@ namespace GK2ZombieHQ.Core.Tests
             Assert.Equal(3, injection.Count);
         }
         [Fact]
+        public void WeaponGoesToItsOwnSlotBetweenToolAndArmor()
+        {
+            var gear = new List<GearIcon> { Gear(GearSlot.Weapon, "sword"), Gear(GearSlot.Tool, "shovel") };
+            var row = GearLogic.Build(gear, null, 0);
+            Assert.Equal("shovel", row[1].Id);
+            Assert.Equal("sword", row[2].Id);
+            Assert.True(row[3].IsEmpty);
+        }
+
+        [Fact]
         public void ZeroOrNegativeLimitKeepsOnlyGear()
         {
             var carried = new List<GearIcon> { new GearIcon { Id = "x" } };
-            Assert.Equal(3, GearLogic.Build(null, carried, 0).Count);
-            Assert.Equal(3, GearLogic.Build(null, carried, -5).Count);
+            Assert.Equal(GearLogic.EquipSlotCount, GearLogic.Build(null, carried, 0).Count);
+            Assert.Equal(GearLogic.EquipSlotCount, GearLogic.Build(null, carried, -5).Count);
         }
     }
 }
