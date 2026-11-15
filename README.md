@@ -33,15 +33,21 @@ its workstation.
 
 ## Requirements
 
-- Graveyard Keeper 2 (Steam).
-- BepInEx 5.4.23.5 x64 and **GK2 Mod Framework** (both installed by
-  [GK2 Mod Installer](https://github.com/otkosss-png/GK2ModInstaller)).
+- Graveyard Keeper 2 (Steam), game version 1.011 or newer (it ships BepInEx and installs
+  Workshop code mods by itself).
+- **GK2 Mod Framework is optional** (since 1.5.10). With it the settings appear in the in-game
+  **Mods** menu; without it the mod works the same and the settings live in
+  `BepInEx\config\otkosss.gk2.zombiehq.cfg`.
 
 ## Install
 
-Copy `BepInEx/plugins/GK2ZombieHQ/GK2ZombieHQ.dll` into
-`<game>\BepInEx\plugins\GK2ZombieHQ\`, or install the Workshop item via the
-[GK2 Workshop Auto-Loader](https://steamcommunity.com/sharedfiles/filedetails/?id=3807406994).
+Subscribe to the mod on the Steam Workshop and start the game. Or copy the
+`BepInEx` folder from the release zip into the game folder.
+
+- Steam Deck / Linux (Proton): set the game's launch options once to
+  `WINEDLLOVERRIDES="winhttp=n,b" %command%`
+- Do not use the old *GK2 Workshop Auto-Loader*: a loader in `BepInEx\patchers` switches the
+  game's own mod installing off. Unsubscribe from it and delete its file.
 
 ## Build
 

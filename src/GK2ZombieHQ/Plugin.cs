@@ -7,11 +7,13 @@ using UnityEngine;
 
 namespace GK2ZombieHQ
 {
-    [BepInDependency("ru.superman4eg.gk2.framework")]
-    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.5.9")]
+    [BepInDependency(FrameworkGuid, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInPlugin(Guid, "GK2 Zombie HQ", "1.5.10")]
     public sealed class Plugin : BaseUnityPlugin
     {
         public const string Guid = "otkosss.gk2.zombiehq";
+        internal const string FrameworkGuid = "ru.superman4eg.gk2.framework";
+        internal static bool FrameworkPresent;
         public static Plugin Instance;
         public static ManualLogSource Log;
         internal static ZombieHqMod Mod;
@@ -20,16 +22,21 @@ namespace GK2ZombieHQ
         {
             Instance = this;
             Log = Logger;
+            FrameworkPresent = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(FrameworkGuid);
             ModLocalization.EnsureFiles();
 
             Mod = new ZombieHqMod();
-            try
+            if (FrameworkPresent)
             {
-                GK2.Framework.FrameworkApi.RegisterMod(Mod, Config);
+                try { RegisterWithFramework(); }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning("GK2 Framework register failed, using local config: " + ex.Message);
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Logger.LogWarning("GK2 Framework register failed, using local config: " + ex.Message);
+                Logger.LogInfo("GK2 Mod Framework not installed: using BepInEx\\config settings (no in-game Mods menu).");
             }
             EnsureSettings();
             RefreshLanguage(force: true);
@@ -38,7 +45,7 @@ namespace GK2ZombieHQ
             try
             {
                 var harmony = new HarmonyLib.Harmony(Guid);
-                foreach (var type in typeof(Plugin).Assembly.GetTypes())
+                foreach (var type in LoadableTypes())
                 {
                     try { harmony.CreateClassProcessor(type).Patch(); }
                     catch (Exception ex) { Logger.LogWarning("harmony patch " + type.Name + " failed: " + ex.Message); }
@@ -52,6 +59,25 @@ namespace GK2ZombieHQ
             go.AddComponent<ZombiePanel>();
             go.AddComponent<ZombieCameraFollow>();
             Logger.LogInfo("GK2 Zombie HQ " + Version + " loaded.");
+        }
+
+        // Без Framework тип FrameworkMod не загрузится и GetTypes() бросит
+        // ReflectionTypeLoadException - берём только успешно загруженные типы.
+        private static System.Collections.Generic.IEnumerable<Type> LoadableTypes()
+        {
+            Type[] types;
+            try { types = typeof(Plugin).Assembly.GetTypes(); }
+            catch (System.Reflection.ReflectionTypeLoadException ex) { types = ex.Types; }
+            foreach (var t in types)
+                if (t != null && t.Name != "FrameworkMod") yield return t; // не typeof: тот грузит тип
+        }
+
+        // Отдельный метод: типы Framework подгружаются только при его JIT,
+        // а он вызывается лишь когда Framework найден.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private void RegisterWithFramework()
+        {
+            GK2.Framework.FrameworkApi.RegisterMod(new FrameworkMod(), Config);
         }
 
         // Если Framework недоступен, регистрируем опции сами (тот же .cfg), чтобы мод работал.

@@ -135,9 +135,16 @@ namespace GK2ZombieHQ
 
         internal static string GameLanguage()
         {
-            try { return GK2.Framework.FrameworkLocalization.CurrentLanguage ?? "en"; }
+            try { return Plugin.FrameworkPresent ? FwLanguage() : "en"; }
             catch { return "en"; }
         }
+
+        // Типы Framework - только в отдельных методах, вызываемых когда Framework найден.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static string FwLanguage() => GK2.Framework.FrameworkLocalization.CurrentLanguage ?? "en";
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static void FwReload() => GK2.Framework.FrameworkLocalization.Reload(ModId);
 
         private static IEnumerable<string> Candidates(string code)
         {
@@ -181,7 +188,9 @@ namespace GK2ZombieHQ
         // Строки mod.*/settings.* из каждого нашего файла — в папку переводов GK2 Mod Framework.
         private static void SyncFrameworkSettings()
         {
-            var target = Path.Combine(BepInEx.Paths.PluginPath, "GK2.Framework", "Localization", ModId);
+            var fwDir = Path.Combine(BepInEx.Paths.PluginPath, "GK2.Framework");
+            if (!Directory.Exists(fwDir)) return;
+            var target = Path.Combine(fwDir, "Localization", ModId);
             Directory.CreateDirectory(target);
             foreach (var code in AvailableCodes())
             {
@@ -196,7 +205,7 @@ namespace GK2ZombieHQ
                 if (settings.Count == 0) continue;
                 WriteIfChanged(Path.Combine(target, code + ".json"), JsonConvert.SerializeObject(settings, Formatting.Indented));
             }
-            try { GK2.Framework.FrameworkLocalization.Reload(ModId); } catch { }
+            if (Plugin.FrameworkPresent) { try { FwReload(); } catch { } }
         }
 
         private static void WriteIfChanged(string path, string content)
